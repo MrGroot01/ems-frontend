@@ -1,0 +1,56 @@
+/* Leave Requests Page CSS */
+
+.leave-cards { display:flex;flex-direction:column;gap:14px; }
+
+.leave-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex; align-items: center; gap: 20px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: border-color .2s;
+}
+.leave-card:hover { border-color: rgba(99,102,241,.2); }
+.leave-card.pending  { border-left: 3px solid #f59e0b; }
+.leave-card.approved { border-left: 3px solid #10b981; }
+.leave-card.rejected { border-left: 3px solid #f43f5e; }
+
+.leave-card-icon { font-size: 28px; }
+.leave-card-body { flex: 1; }
+.leave-card-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.leave-card-meta { font-size: 12px; color: rgba(255,255,255,.4); display:flex;gap:14px;flex-wrap:wrap; }
+.leave-card-meta span { display:flex;align-items:center;gap:4px; }
+.leave-card-reason { font-size: 13px; color: rgba(255,255,255,.5); margin-top: 8px; font-style: italic; }
+
+.leave-card-actions { display:flex;gap:10px;flex-shrink:0; }
+
+.btn-approve {
+  padding: 8px 18px;
+  background: rgba(16,185,129,.12);
+  border: 1px solid rgba(16,185,129,.3);
+  border-radius: 10px; cursor: pointer;
+  color: #34d399; font-family: 'Plus Jakarta Sans',sans-serif;
+  font-size: 13px; font-weight: 700; transition: all .2s;
+}
+.btn-approve:hover { background: rgba(16,185,129,.22); }
+
+.btn-reject {
+  padding: 8px 18px;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 10px; cursor: pointer;
+  color: #f87171; font-family: 'Plus Jakarta Sans',sans-serif;
+  font-size: 13px; font-weight: 700; transition: all .2s;
+}
+.btn-reject:hover { background: rgba(239,68,68,.2); }
+
+/* tabs */
+.leave-tabs { display:flex;gap:4px;margin-bottom:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:4px; }
+.leave-tab {
+  padding: 8px 18px; border:none; border-radius:9px;
+  background: none; color:rgba(255,255,255,.4);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.leave-tab.active { background:rgba(99,102,241,.2);color:#fff;border:1px solid rgba(99,102,241,.25); }

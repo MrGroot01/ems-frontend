@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+.modal-box {
+  background: #0f1225;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 24px;
+  width: 100%; max-width: var(--modal-w, 520px);
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 40px 80px rgba(0,0,0,.6);
+  animation: popIn .3s cubic-bezier(.34,1.56,.64,1);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.modal-box::-webkit-scrollbar { width: 4px; }
+.modal-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
+@keyframes popIn { from{opacity:0;transform:scale(.92) translateY(20px);} to{opacity:1;transform:scale(1) translateY(0);} }
+
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.modal-head h3 { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
+.modal-close {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px; cursor: pointer;
+  color: rgba(255,255,255,.5); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.modal-close:hover { background: rgba(239,68,68,.15); color: #f87171; }
+
+.modal-body { padding: 28px; }
+
+.modal-footer {
+  display: flex; gap: 12px; justify-content: flex-end;
+  padding: 20px 28px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* form fields inside modal */
+.modal-body .field { margin-bottom: 18px; }
+.modal-body .field label {
+  display: block; font-size: 11px; font-weight: 700;
+  letter-spacing: .8px; color: rgba(255,255,255,.4);
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.modal-body .field input,
+.modal-body .field select,
+.modal-body .field textarea {
+  width: 100%; padding: 12px 14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px; color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; outline: none; transition: all .25s;
+  box-sizing: border-box;
+}
+.modal-body .field input::placeholder,
+.modal-body .field textarea::placeholder { color: rgba(255,255,255,.2); }
+.modal-body .field input:focus,
+.modal-body .field select:focus,
+.modal-body .field textarea:focus {
+  border-color: rgba(99,102,241,.6);
+  background: rgba(99,102,241,.07);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+}
+.modal-body .field select { cursor: pointer; -webkit-appearance: none; }
+.modal-body .field select option { background: #0f1225; }
+.modal-body .field textarea { resize: vertical; min-height: 90px; }
+.modal-body .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-err { color: #f87171; font-size: 11px; margin-top: 5px; }
+
+/* buttons */
+.btn-primary {
+  padding: 11px 24px;
+  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  border: none; border-radius: 10px;
+  color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all .25s; box-shadow: 0 4px 20px rgba(99,102,241,.4);
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(99,102,241,.5); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  padding: 11px 20px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px; color: rgba(255,255,255,.6);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all .2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+.btn-danger {
+  padding: 11px 20px;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 10px; color: #f87171;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all .2s;
+}
+.btn-danger:hover { background: rgba(239,68,68,.2); }
+
+.spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: rot .7s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }

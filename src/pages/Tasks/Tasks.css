@@ -1,0 +1,60 @@
+/* Tasks Page CSS */
+
+.tasks-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.task-col {}
+.task-col-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.task-col-title { font-size: 14px; font-weight: 800; color: #fff; }
+.task-col-count {
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.5);
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+}
+
+.task-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: transform .2s, border-color .2s;
+}
+.task-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,.2); }
+
+.task-card-head { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px; }
+.task-card-title { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.4; }
+.task-card-desc  { font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 12px; line-height: 1.5; }
+.task-card-meta  { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px; }
+.task-card-footer{ display:flex;align-items:center;justify-content:space-between; }
+.task-assignee   { display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.4); }
+.task-due        { font-size:11px;color:rgba(255,255,255,.3); }
+
+/* kanban column colors */
+.task-col.todo        .task-col-title { color: rgba(255,255,255,.6); }
+.task-col.in_progress .task-col-title { color: #60a5fa; }
+.task-col.review      .task-col-title { color: #c084fc; }
+.task-col.completed   .task-col-title { color: #34d399; }
+
+/* progress slider */
+.progress-slider {
+  width: 100%; margin-top: 8px;
+  -webkit-appearance: none; appearance: none;
+  height: 6px; border-radius: 6px;
+  background: rgba(255,255,255,.1); outline: none; cursor: pointer;
+}
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #6366f1; cursor: pointer;
+  box-shadow: 0 0 6px rgba(99,102,241,.5);
+}
