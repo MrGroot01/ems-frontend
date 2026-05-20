@@ -99,7 +99,9 @@ export const payrollAPI = {
   getAllPayslips:   () => api.get('/payroll/payslips/'),
   setSalary:       (data) => api.post('/payroll/salary/', data),
   generatePayslip: (data) => api.post('/payroll/payslips/', data),
+  markPaid:        (id)   => api.patch(`/payroll/payslips/${id}/mark_paid/`),
 };
+ 
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
 export const notificationsAPI = {

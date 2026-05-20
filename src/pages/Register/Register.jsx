@@ -67,7 +67,7 @@ export default function Register() {
     try {
       await authAPI.register(fd);
       setToast('✅ Account created! Redirecting to login…');
-      setTimeout(() => navigate('/login'), 2200);
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       const data = err.response?.data || {};
       const e2 = {};

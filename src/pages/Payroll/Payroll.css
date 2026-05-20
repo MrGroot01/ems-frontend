@@ -1,1 +1,187 @@
-/* Payroll page — imports shared styles from Attendance.css */
+/* ── Payroll Page CSS ────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Salary breakdown grid */
+.salary-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.breakdown-item {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform .2s, box-shadow .2s;
+}
+.breakdown-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+
+.breakdown-label {
+  font-size: 12px;
+  color: rgba(255,255,255,.4);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+}
+
+.breakdown-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.5px;
+}
+.breakdown-value.green  { color: #34d399; }
+.breakdown-value.red    { color: #f87171; }
+.breakdown-value.purple { color: #818cf8; }
+
+/* Payslip card */
+.payslip-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: border-color .2s, transform .2s;
+}
+.payslip-card:hover {
+  border-color: rgba(99,102,241,.25);
+  transform: translateY(-2px);
+}
+.payslip-card:last-child { margin-bottom: 0; }
+
+.payslip-month {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.3px;
+}
+
+.payslip-yr {
+  font-size: 13px;
+  color: rgba(255,255,255,.45);
+  margin-top: 3px;
+  margin-bottom: 8px;
+}
+
+.payslip-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.payslip-net {
+  font-size: 24px;
+  font-weight: 800;
+  color: #818cf8;
+  letter-spacing: -.5px;
+}
+
+/* Download button */
+.payslip-dl {
+  padding: 9px 16px;
+  background: rgba(99,102,241,.12);
+  border: 1px solid rgba(99,102,241,.3);
+  border-radius: 10px;
+  cursor: pointer;
+  color: #818cf8;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.payslip-dl:hover {
+  background: rgba(99,102,241,.22);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99,102,241,.3);
+}
+
+/* Salary rows */
+.salary-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.sal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.sal-row:last-child { border-bottom: none; }
+
+.sal-label {
+  color: rgba(255,255,255,.5);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sal-val {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.sal-val.green { color: #34d399; }
+.sal-val.red   { color: #f87171; }
+.sal-val.total { color: #818cf8; font-size: 18px; }
+
+/* Spinner */
+.spin {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinRot .7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spinRot { to { transform: rotate(360deg); } }
+
+/* ── Light theme ─────────────────────────────────────────────── */
+[data-theme="light"] .breakdown-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06) !important;
+}
+[data-theme="light"] .breakdown-label { color: #64748b !important; }
+[data-theme="light"] .breakdown-value { color: #0f172a !important; }
+
+[data-theme="light"] .payslip-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06) !important;
+}
+[data-theme="light"] .payslip-month { color: #0f172a !important; }
+[data-theme="light"] .payslip-yr    { color: #64748b !important; }
+
+[data-theme="light"] .sal-row   { border-bottom: 1px solid #f1f5f9 !important; }
+[data-theme="light"] .sal-label { color: #64748b !important; }
+[data-theme="light"] .sal-val   { color: #0f172a !important; }
+
+[data-theme="light"] .payslip-dl {
+  background: rgba(99,102,241,.08) !important;
+  border-color: rgba(99,102,241,.2) !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .salary-breakdown { grid-template-columns: 1fr 1fr; }
+  .payslip-card { flex-direction: column; }
+  .payslip-dl { width: 100%; text-align: center; }
+}
