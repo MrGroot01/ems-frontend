@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
-
+import { Link } from 'react-router-dom'
 const ADMIN_MENU = [
   { section: 'Main' },
   { ico:'📊', txt:'Dashboard',      path:'/admin',               end:true },
@@ -17,6 +17,7 @@ const ADMIN_MENU = [
   { section: 'System' },
   { ico:'🔔', txt:'Notifications',   path:'/admin/notifications', badge:'notif' },
   { ico:'⚙️', txt:'Settings',        path:'/admin/settings' },
+  { ico:'🤖', txt:'AI Assistant', path:'/admin/ai-assistant' },  // ✅ ADDED
 ];
 
 const EMP_MENU = [
@@ -31,6 +32,7 @@ const EMP_MENU = [
   { ico:'💰', txt:'Payroll',      path:'/employee/payroll' },
   { section: 'More' },
   { ico:'🔔', txt:'Notifications',path:'/employee/notifications', badge:'notif' },
+  { ico:'🤖', txt:'AI Assistant', path:'/employee/ai-assistant' },  // ✅ ADDED
 ];
 
 export default function Sidebar({ pendingLeaves = 0, unreadNotifs = 0, mobileOpen, onMobileClose }) {

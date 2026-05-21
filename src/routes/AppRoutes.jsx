@@ -15,6 +15,7 @@ import Payroll         from '../pages/Payroll/Payroll';
 import Reports         from '../pages/Reports/Reports';
 import Notifications   from '../pages/Notifications/Notifications';
 import Settings        from '../pages/Settings/Settings';
+import AIAssistant from '../pages/AIAssistant/AIAssistant';
 import Profile         from '../pages/Profile/Profile';
 
 const Guard = ({ children, roles }) => {
@@ -48,6 +49,8 @@ const AppRoutes = () => {
         <Route path="/admin/reports"        element={<Guard roles={['admin']}><Reports /></Guard>} />
         <Route path="/admin/notifications"  element={<Guard roles={['admin']}><Notifications /></Guard>} />
         <Route path="/admin/settings"       element={<Guard roles={['admin']}><Settings /></Guard>} />
+        <Route path="/admin/ai-assistant" element={<Guard roles={['admin']}><AIAssistant /></Guard>} />
+
 
         {/* Employee */}
         <Route path="/employee"                  element={<Guard roles={['employee']}><EmployeeDashboard /></Guard>} />
@@ -57,6 +60,7 @@ const AppRoutes = () => {
         <Route path="/employee/tasks"            element={<Guard roles={['employee']}><Tasks /></Guard>} />
         <Route path="/employee/payroll"          element={<Guard roles={['employee']}><Payroll /></Guard>} />
         <Route path="/employee/notifications"    element={<Guard roles={['employee']}><Notifications /></Guard>} />
+        <Route path="/employee/ai-assistant" element={<Guard roles={['employee']}><AIAssistant /></Guard>} />
       </Routes>
     </BrowserRouter>
   );
