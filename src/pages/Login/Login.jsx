@@ -2,17 +2,21 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
+import Captcha from '../../components/Captcha/Captcha';
 import './Login.css';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [role, setRole]       = useState('employee');
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const [errs, setErrs]       = useState({});
-  const [form, setForm]       = useState({ email: '', password: '', remember: false });
+  const [role,            setRole]            = useState('employee');
+  const [showPwd,         setShowPwd]         = useState(false);
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
+  const [errs,            setErrs]            = useState({});
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [form,            setForm]            = useState({
+    email: '', password: '', remember: false
+  });
 
   const change = (e) => {
     const { name, value, type, checked } = e.target;
@@ -23,9 +27,9 @@ export default function Login() {
 
   const validate = () => {
     const e = {};
-    if (!form.email)            e.email    = 'Email is required';
+    if (!form.email)    e.email    = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email';
-    if (!form.password)         e.password = 'Password is required';
+    if (!form.password) e.password = 'Password is required';
     return e;
   };
 
@@ -33,9 +37,16 @@ export default function Login() {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length) { setErrs(v); return; }
-    setLoading(true); setError('');
+    if (!captchaVerified) {
+      setError('Please verify the captcha first');
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
-      const res = await authAPI.login({ email: form.email, password: form.password, role });
+      const res = await authAPI.login({
+        email: form.email, password: form.password, role
+      });
       login(res.data.user, res.data.tokens);
       navigate(role === 'admin' ? '/admin' : '/employee');
     } catch (err) {
@@ -107,9 +118,11 @@ export default function Login() {
               <div className="field-wrap">
                 <span className="field-ico">🔒</span>
                 <input type={showPwd ? 'text' : 'password'} name="password"
-                  value={form.password} onChange={change} placeholder="Enter password"
+                  value={form.password} onChange={change}
+                  placeholder="Enter password"
                   className={errs.password ? 'is-error' : ''} />
-                <button type="button" className="eye-btn" onClick={() => setShowPwd(p => !p)}>
+                <button type="button" className="eye-btn"
+                  onClick={() => setShowPwd(p => !p)}>
                   {showPwd ? '🙈' : '👁️'}
                 </button>
               </div>
@@ -118,18 +131,30 @@ export default function Login() {
 
             <div className="check-row">
               <label className="chk-label">
-                <input type="checkbox" name="remember" checked={form.remember} onChange={change} />
+                <input type="checkbox" name="remember"
+                  checked={form.remember} onChange={change} />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="link-sm">Forgot password?</Link>
+              <Link to="/forgot-password" className="link-sm">
+                Forgot password?
+              </Link>
             </div>
 
-            <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? <><div className="spin"/>&nbsp;Signing in…</> : 'Sign In →'}
+            {/* ── CAPTCHA ── */}
+            <Captcha onVerify={(valid) => setCaptchaVerified(valid)} />
+
+            <button type="submit" className="btn-submit"
+              disabled={loading || !captchaVerified}
+              style={{ opacity: captchaVerified ? 1 : 0.6 }}>
+              {loading
+                ? <><div className="spin"/>&nbsp;Signing in…</>
+                : 'Sign In →'}
             </button>
           </form>
 
-          <p className="alt-link">New here? <Link to="/register">Create an account</Link></p>
+          <p className="alt-link">
+            New here? <Link to="/register">Create an account</Link>
+          </p>
         </div>
       </div>
     </div>

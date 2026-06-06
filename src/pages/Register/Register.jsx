@@ -1,32 +1,35 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../services/api';
+import Captcha from '../../components/Captcha/Captcha';
 import './Register.css';
 
 const DEPTS = ['Engineering','HR','Finance','Marketing','Operations','Design','Sales'];
 
 const strength = (p) => {
   let s = 0;
-  if (p.length >= 8)         s++;
-  if (/[A-Z]/.test(p))       s++;
-  if (/[0-9]/.test(p))       s++;
-  if (/[!@#$%^&*]/.test(p))  s++;
+  if (p.length >= 8)        s++;
+  if (/[A-Z]/.test(p))      s++;
+  if (/[0-9]/.test(p))      s++;
+  if (/[!@#$%^&*]/.test(p)) s++;
   return s;
 };
 const STRENGTH_LABEL = ['','Weak','Fair','Good','Strong'];
 
 export default function Register() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [toast,   setToast]   = useState('');
-  const [gErr,    setGErr]    = useState('');
-  const [errs,    setErrs]    = useState({});
-  const [showP,   setShowP]   = useState(false);
-  const [showC,   setShowC]   = useState(false);
-  const [photo,   setPhoto]   = useState(null);
-  const [form,    setForm]    = useState({
-    full_name:'', employee_id:'', email:'', phone:'',
-    department:'', role:'employee', password:'', confirm_password:'', profile_image: null,
+  const [loading,         setLoading]         = useState(false);
+  const [toast,           setToast]           = useState('');
+  const [gErr,            setGErr]            = useState('');
+  const [errs,            setErrs]            = useState({});
+  const [showP,           setShowP]           = useState(false);
+  const [showC,           setShowC]           = useState(false);
+  const [photo,           setPhoto]           = useState(null);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [form,            setForm]            = useState({
+    full_name: '', employee_id: '', email: '', phone: '',
+    department: '', role: 'employee',
+    password: '', confirm_password: '', profile_image: null,
   });
 
   const sc = strength(form.password);
@@ -45,15 +48,16 @@ export default function Register() {
 
   const validate = () => {
     const e = {};
-    if (!form.full_name.trim())   e.full_name    = 'Required';
-    if (!form.employee_id.trim()) e.employee_id  = 'Required';
-    if (!form.email.trim())       e.email        = 'Required';
+    if (!form.full_name.trim())   e.full_name   = 'Required';
+    if (!form.employee_id.trim()) e.employee_id = 'Required';
+    if (!form.email.trim())       e.email       = 'Required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email';
-    if (!form.phone.trim())       e.phone        = 'Required';
-    if (!form.department)         e.department   = 'Select dept';
-    if (!form.password)           e.password     = 'Required';
-    else if (sc < 3)              e.password     = 'Password too weak';
-    if (form.password !== form.confirm_password) e.confirm_password = 'Passwords do not match';
+    if (!form.phone.trim())       e.phone       = 'Required';
+    if (!form.department)         e.department  = 'Select dept';
+    if (!form.password)           e.password    = 'Required';
+    else if (sc < 3)              e.password    = 'Password too weak';
+    if (form.password !== form.confirm_password)
+      e.confirm_password = 'Passwords do not match';
     return e;
   };
 
@@ -61,9 +65,13 @@ export default function Register() {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length) { setErrs(v); return; }
+    if (!captchaVerified) {
+      setGErr('Please verify the captcha first');
+      return;
+    }
     setLoading(true);
     const fd = new FormData();
-    Object.entries(form).forEach(([k,v]) => { if(v) fd.append(k,v); });
+    Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v); });
     try {
       await authAPI.register(fd);
       setToast('✅ Account created! Redirecting to login…');
@@ -71,7 +79,9 @@ export default function Register() {
     } catch (err) {
       const data = err.response?.data || {};
       const e2 = {};
-      Object.entries(data).forEach(([k,v]) => { e2[k] = Array.isArray(v) ? v[0] : v; });
+      Object.entries(data).forEach(([k, v]) => {
+        e2[k] = Array.isArray(v) ? v[0] : v;
+      });
       setErrs(e2);
       setGErr('Registration failed — please fix the errors above.');
     } finally { setLoading(false); }
@@ -103,7 +113,8 @@ export default function Register() {
                 </div>
                 <label className="photo-btn">
                   📷 Upload Photo
-                  <input type="file" name="profile_image" accept="image/*" hidden onChange={change}/>
+                  <input type="file" name="profile_image"
+                    accept="image/*" hidden onChange={change}/>
                 </label>
               </div>
             </div>
@@ -161,10 +172,13 @@ export default function Register() {
               <label>Department</label>
               <div className="field-wrap">
                 <span className="field-ico">🏬</span>
-                <select name="department" value={form.department} onChange={change}
+                <select name="department" value={form.department}
+                  onChange={change}
                   className={errs.department ? 'is-error':''}>
                   <option value="">Select department…</option>
-                  {DEPTS.map(d => <option key={d} value={d.toLowerCase()}>{d}</option>)}
+                  {DEPTS.map(d =>
+                    <option key={d} value={d.toLowerCase()}>{d}</option>
+                  )}
                 </select>
               </div>
               {errs.department && <p className="field-err">{errs.department}</p>}
@@ -187,10 +201,12 @@ export default function Register() {
               <label>Password</label>
               <div className="field-wrap">
                 <span className="field-ico">🔒</span>
-                <input type={showP?'text':'password'} name="password" value={form.password}
-                  onChange={change} placeholder="Min. 8 chars"
+                <input type={showP?'text':'password'} name="password"
+                  value={form.password} onChange={change}
+                  placeholder="Min. 8 chars"
                   className={errs.password ? 'is-error':''} />
-                <button type="button" className="eye-btn" onClick={() => setShowP(p=>!p)}>
+                <button type="button" className="eye-btn"
+                  onClick={() => setShowP(p=>!p)}>
                   {showP ? '🙈':'👁️'}
                 </button>
               </div>
@@ -198,7 +214,8 @@ export default function Register() {
                 <>
                   <div className="pwd-bars">
                     {[1,2,3,4].map(i => (
-                      <div key={i} className={`pwd-bar ${sc >= i ? `s${sc}` : ''}`} />
+                      <div key={i}
+                        className={`pwd-bar ${sc >= i ? `s${sc}` : ''}`} />
                     ))}
                   </div>
                   <p className="pwd-hint">{STRENGTH_LABEL[sc]}</p>
@@ -207,27 +224,41 @@ export default function Register() {
               {errs.password && <p className="field-err">{errs.password}</p>}
             </div>
 
-            {/* Confirm */}
+            {/* Confirm Password */}
             <div className="field">
               <label>Confirm Password</label>
               <div className="field-wrap">
                 <span className="field-ico">🔑</span>
-                <input type={showC?'text':'password'} name="confirm_password" value={form.confirm_password}
-                  onChange={change} placeholder="Repeat password"
+                <input type={showC?'text':'password'}
+                  name="confirm_password"
+                  value={form.confirm_password} onChange={change}
+                  placeholder="Repeat password"
                   className={errs.confirm_password ? 'is-error':''} />
-                <button type="button" className="eye-btn" onClick={() => setShowC(p=>!p)}>
+                <button type="button" className="eye-btn"
+                  onClick={() => setShowC(p=>!p)}>
                   {showC ? '🙈':'👁️'}
                 </button>
               </div>
-              {errs.confirm_password && <p className="field-err">{errs.confirm_password}</p>}
+              {errs.confirm_password &&
+                <p className="field-err">{errs.confirm_password}</p>}
             </div>
 
           </div>
 
-          <button type="submit" className="btn-reg" disabled={loading}>
-            {loading ? <><div className="spin"/> Creating account…</> : '🚀 Create Account'}
+          {/* ── CAPTCHA ── */}
+          <Captcha onVerify={(valid) => setCaptchaVerified(valid)} />
+
+          <button type="submit" className="btn-reg"
+            disabled={loading || !captchaVerified}
+            style={{ opacity: captchaVerified ? 1 : 0.6 }}>
+            {loading
+              ? <><div className="spin"/> Creating account…</>
+              : '🚀 Create Account'}
           </button>
-          <p className="alt-link">Already have an account? <Link to="/login">Sign in</Link></p>
+
+          <p className="alt-link">
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
         </form>
       </div>
     </div>
