@@ -1,61 +1,89 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const generateText = (length = 5) => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join('');
+};
+
+const drawCaptcha = (canvas, text) => {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w   = canvas.width;
+  const h   = canvas.height;
+
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillRect(0, 0, w, h);
+
+  for (let i = 0; i < 6; i++) {
+    ctx.strokeStyle = `rgba(37,99,235,${Math.random() * 0.3 + 0.1})`;
+    ctx.lineWidth   = Math.random() * 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.random() * w, Math.random() * h);
+    ctx.lineTo(Math.random() * w, Math.random() * h);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 40; i++) {
+    ctx.fillStyle = `rgba(37,99,235,${Math.random() * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(Math.random() * w, Math.random() * h, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const charWidth = w / (text.length + 1);
+  text.split('').forEach((char, i) => {
+    ctx.save();
+    const x = charWidth * (i + 0.8) + charWidth * 0.2;
+    const y = h / 2 + 8;
+    ctx.translate(x, y);
+    ctx.rotate((Math.random() - 0.5) * 0.5);
+    const size    = Math.floor(Math.random() * 8) + 28;
+    ctx.font      = `bold ${size}px Arial`;
+    ctx.fillStyle = `hsl(${220 + Math.random() * 40},80%,${30 + Math.random() * 20}%)`;
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur  = 2;
+    ctx.fillText(char, 0, 0);
+    ctx.restore();
+  });
+
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(0, 0, w, h);
+};
 
 export default function Captcha({ onVerify }) {
-  const [captchaKey,   setCaptchaKey]   = useState('');
-  const [captchaImg,   setCaptchaImg]   = useState('');
-  const [captchaInput, setCaptchaInput] = useState('');
-  const [verified,     setVerified]     = useState(false);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState('');
+  const canvasRef                     = useRef(null);
+  const [captchaText, setCaptchaText] = useState('');
+  const [input,       setInput]       = useState('');
+  const [verified,    setVerified]    = useState(false);
+  const [error,       setError]       = useState('');
 
-  const loadCaptcha = useCallback(async () => {
-    try {
-      setCaptchaInput('');
-      setVerified(false);
-      setError('');
-      onVerify && onVerify(false);
-      const res  = await fetch(`${API}/auth/captcha/`);
-      const data = await res.json();
-      setCaptchaKey(data.captcha_key);
-      setCaptchaImg(data.captcha_image_url);
-    } catch {
-      setError('Failed to load captcha. Refresh page.');
-    }
+  const refresh = useCallback(() => {
+    const text = generateText(5);
+    setCaptchaText(text);
+    setInput('');
+    setVerified(false);
+    setError('');
+    onVerify && onVerify(false);
+    setTimeout(() => drawCaptcha(canvasRef.current, text), 0);
   }, [onVerify]);
 
-  useEffect(() => { loadCaptcha(); }, [loadCaptcha]);
+  useEffect(() => { refresh(); }, [refresh]);
 
-  const verifyCaptcha = async () => {
-    if (!captchaInput.trim()) {
+  const verify = () => {
+    if (!input.trim()) {
       setError('Please enter the captcha text');
       return;
     }
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API}/auth/captcha/verify/`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          captcha_key:   captchaKey,
-          captcha_value: captchaInput,
-        }),
-      });
-      const data = await res.json();
-      if (data.valid) {
-        setVerified(true);
-        onVerify && onVerify(true);
-      } else {
-        setError('Wrong captcha! Try again.');
-        loadCaptcha();
-        onVerify && onVerify(false);
-      }
-    } catch {
-      setError('Verification failed. Try again.');
-    } finally {
-      setLoading(false);
+    if (input.trim().toUpperCase() === captchaText.toUpperCase()) {
+      setVerified(true);
+      setError('');
+      onVerify && onVerify(true);
+    } else {
+      setError('Wrong captcha! Try again.');
+      refresh();
     }
   };
 
@@ -69,80 +97,57 @@ export default function Captcha({ onVerify }) {
         CAPTCHA VERIFICATION
       </label>
 
-      {/* Image row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-        <div style={{
-          background: '#f1f5f9', borderRadius: '8px',
-          padding: '8px', border: '2px solid #e2e8f0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          minWidth: '170px', minHeight: '60px',
-        }}>
-          {captchaImg
-            ? <img src={captchaImg} alt="captcha"
-                   style={{ height: '55px', display: 'block', borderRadius: '4px' }} />
-            : <div style={{ height: '55px', width: '160px',
-                            background: '#e2e8f0', borderRadius: '4px',
-                            display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', color: '#94a3b8',
-                            fontSize: '12px' }}>
-                Loading...
-              </div>
-          }
-        </div>
-
+        <canvas
+          ref={canvasRef}
+          width={180} height={58}
+          style={{
+            borderRadius: '8px', border: '2px solid #e2e8f0',
+            display: 'block', cursor: 'pointer',
+          }}
+          onClick={refresh}
+          title="Click to refresh"
+        />
         <button
-          type="button"
-          onClick={loadCaptcha}
-          title="Refresh captcha"
+          type="button" onClick={refresh} title="Refresh captcha"
           style={{
             background: '#f1f5f9', border: '2px solid #e2e8f0',
             borderRadius: '8px', cursor: 'pointer',
             fontSize: '20px', padding: '8px 12px',
-            transition: 'all 0.2s',
           }}
         >
           🔄
         </button>
       </div>
 
-      {/* Input + Verify */}
       {!verified ? (
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
-            value={captchaInput}
-            onChange={e => {
-              setCaptchaInput(e.target.value.toUpperCase());
-              setError('');
-            }}
-            onKeyDown={e => e.key === 'Enter' && verifyCaptcha()}
+            value={input}
+            onChange={e => { setInput(e.target.value.toUpperCase()); setError(''); }}
+            onKeyDown={e => e.key === 'Enter' && verify()}
             placeholder="Type the text above"
             maxLength={6}
             style={{
-              flex: 1, padding: '10px 14px',
-              borderRadius: '8px',
+              flex: 1, padding: '10px 14px', borderRadius: '8px',
               border: error ? '2px solid #dc2626' : '2px solid #e2e8f0',
-              fontSize: '16px', letterSpacing: '4px',
-              fontWeight: 'bold', outline: 'none',
-              background: '#f8fafc', color: '#1e293b',
+              fontSize: '16px', letterSpacing: '4px', fontWeight: 'bold',
+              outline: 'none', background: '#f8fafc', color: '#1e293b',
               textTransform: 'uppercase',
             }}
           />
           <button
-            type="button"
-            onClick={verifyCaptcha}
-            disabled={loading || !captchaInput}
+            type="button" onClick={verify} disabled={!input}
             style={{
               padding: '10px 18px', borderRadius: '8px',
-              background: loading ? '#94a3b8' : '#2563eb',
+              background: input ? '#2563eb' : '#94a3b8',
               color: '#fff', border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontWeight: '600', fontSize: '14px',
-              transition: 'all 0.2s',
-              whiteSpace: 'nowrap',
+              cursor: input ? 'pointer' : 'not-allowed',
+              fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap',
             }}
           >
-            {loading ? '⏳' : 'Verify'}
+            Verify
           </button>
         </div>
       ) : (
@@ -157,14 +162,14 @@ export default function Captcha({ onVerify }) {
       )}
 
       {error && (
-        <p style={{
-          color: '#dc2626', fontSize: '12px',
-          margin: '6px 0 0', display: 'flex',
-          alignItems: 'center', gap: '4px',
-        }}>
+        <p style={{ color: '#dc2626', fontSize: '12px', margin: '6px 0 0' }}>
           ⚠️ {error}
         </p>
       )}
+
+      <p style={{ color: '#94a3b8', fontSize: '11px', margin: '6px 0 0' }}>
+        💡 Click image or 🔄 to refresh captcha
+      </p>
     </div>
   );
 }
