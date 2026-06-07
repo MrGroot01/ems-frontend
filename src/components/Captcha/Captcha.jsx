@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const generateText = (length = 5) => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -13,14 +13,10 @@ const drawCaptcha = (canvas, text) => {
   const w   = canvas.width;
   const h   = canvas.height;
 
-  // Clear first
   ctx.clearRect(0, 0, w, h);
-
-  // Background
   ctx.fillStyle = '#f1f5f9';
   ctx.fillRect(0, 0, w, h);
 
-  // Noise lines
   for (let i = 0; i < 6; i++) {
     ctx.strokeStyle = `rgba(37,99,235,${Math.random() * 0.3 + 0.1})`;
     ctx.lineWidth   = Math.random() * 2;
@@ -30,7 +26,6 @@ const drawCaptcha = (canvas, text) => {
     ctx.stroke();
   }
 
-  // Noise dots
   for (let i = 0; i < 40; i++) {
     ctx.fillStyle = `rgba(37,99,235,${Math.random() * 0.3})`;
     ctx.beginPath();
@@ -38,65 +33,72 @@ const drawCaptcha = (canvas, text) => {
     ctx.fill();
   }
 
-  // Draw characters
   const charWidth = w / (text.length + 1);
   text.split('').forEach((char, i) => {
     ctx.save();
     ctx.translate(charWidth * (i + 0.9), h / 2 + 8);
     ctx.rotate((Math.random() - 0.5) * 0.5);
-    ctx.font      = `bold ${Math.floor(Math.random() * 8) + 28}px Arial`;
-    ctx.fillStyle = `hsl(${220 + Math.random() * 40},80%,${30 + Math.random() * 20}%)`;
+    ctx.font        = `bold ${Math.floor(Math.random() * 8) + 28}px Arial`;
+    ctx.fillStyle   = `hsl(${220 + Math.random() * 40},80%,${30 + Math.random() * 20}%)`;
     ctx.shadowColor = 'rgba(0,0,0,0.2)';
     ctx.shadowBlur  = 2;
     ctx.fillText(char, 0, 0);
     ctx.restore();
   });
 
-  // Border
   ctx.strokeStyle = '#e2e8f0';
   ctx.lineWidth   = 2;
   ctx.strokeRect(0, 0, w, h);
 };
 
-
 export default function Captcha({ onVerify }) {
-  const canvasRef                     = useRef(null);
+  const canvasRef    = useRef(null);
+  const onVerifyRef  = useRef(onVerify);   // ← store in ref to avoid re-renders
+  const captchaRef   = useRef('');         // ← store text in ref too
+
   const [captchaText, setCaptchaText] = useState('');
   const [input,       setInput]       = useState('');
   const [verified,    setVerified]    = useState(false);
   const [error,       setError]       = useState('');
 
-  // ── Generate new text ──────────────────────────────────
+  // ── Keep ref updated ──────────────────────────────────
+  useEffect(() => {
+    onVerifyRef.current = onVerify;
+  }, [onVerify]);
+
+  // ── Refresh captcha ───────────────────────────────────
   const refresh = useCallback(() => {
     const text = generateText(5);
+    captchaRef.current = text;
     setCaptchaText(text);
     setInput('');
     setVerified(false);
     setError('');
-    onVerify && onVerify(false);
-  }, [onVerify]);
+    onVerifyRef.current && onVerifyRef.current(false);
+  }, []);
 
-  // ── Draw whenever captchaText changes ─────────────────
+  // ── Draw when text changes ────────────────────────────
   useEffect(() => {
     if (captchaText && canvasRef.current) {
       drawCaptcha(canvasRef.current, captchaText);
     }
   }, [captchaText]);
 
-  // ── Initial load ───────────────────────────────────────
+  // ── Load once on mount ────────────────────────────────
   useEffect(() => {
     refresh();
-  }, []); // eslint-disable-line
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Verify ────────────────────────────────────────────
   const verify = () => {
     if (!input.trim()) {
       setError('Please enter the captcha text');
       return;
     }
-    if (input.trim().toUpperCase() === captchaText.toUpperCase()) {
+    if (input.trim().toUpperCase() === captchaRef.current.toUpperCase()) {
       setVerified(true);
       setError('');
-      onVerify && onVerify(true);
+      onVerifyRef.current && onVerifyRef.current(true);
     } else {
       setError('Wrong captcha! Try again.');
       refresh();
@@ -113,83 +115,54 @@ export default function Captcha({ onVerify }) {
         CAPTCHA VERIFICATION
       </label>
 
-      {/* Canvas + Refresh */}
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        gap: '10px', marginBottom: '10px'
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
         <canvas
           ref={canvasRef}
-          width={180}
-          height={58}
+          width={180} height={58}
           style={{
-            borderRadius: '8px',
-            border: '2px solid #e2e8f0',
-            display: 'block',
-            cursor: 'pointer',
-            background: '#f1f5f9',
+            borderRadius: '8px', border: '2px solid #e2e8f0',
+            display: 'block', cursor: 'pointer', background: '#f1f5f9',
           }}
           onClick={refresh}
           title="Click to refresh"
         />
         <button
-          type="button"
-          onClick={refresh}
-          title="Refresh captcha"
+          type="button" onClick={refresh}
           style={{
-            background: '#f1f5f9',
-            border: '2px solid #e2e8f0',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '20px',
-            padding: '8px 12px',
+            background: '#f1f5f9', border: '2px solid #e2e8f0',
+            borderRadius: '8px', cursor: 'pointer',
+            fontSize: '20px', padding: '8px 12px',
           }}
         >
           🔄
         </button>
       </div>
 
-      {/* Input + Verify or Success */}
       {!verified ? (
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
             value={input}
-            onChange={e => {
-              setInput(e.target.value.toUpperCase());
-              setError('');
-            }}
+            onChange={e => { setInput(e.target.value.toUpperCase()); setError(''); }}
             onKeyDown={e => e.key === 'Enter' && verify()}
             placeholder="Type the text above"
             maxLength={6}
             style={{
-              flex: 1,
-              padding: '10px 14px',
-              borderRadius: '8px',
+              flex: 1, padding: '10px 14px', borderRadius: '8px',
               border: error ? '2px solid #dc2626' : '2px solid #e2e8f0',
-              fontSize: '16px',
-              letterSpacing: '4px',
-              fontWeight: 'bold',
-              outline: 'none',
-              background: '#f8fafc',
-              color: '#1e293b',
+              fontSize: '16px', letterSpacing: '4px', fontWeight: 'bold',
+              outline: 'none', background: '#f8fafc', color: '#1e293b',
               textTransform: 'uppercase',
             }}
           />
           <button
-            type="button"
-            onClick={verify}
-            disabled={!input}
+            type="button" onClick={verify} disabled={!input}
             style={{
-              padding: '10px 18px',
-              borderRadius: '8px',
+              padding: '10px 18px', borderRadius: '8px',
               background: input ? '#2563eb' : '#94a3b8',
-              color: '#fff',
-              border: 'none',
+              color: '#fff', border: 'none',
               cursor: input ? 'pointer' : 'not-allowed',
-              fontWeight: '600',
-              fontSize: '14px',
-              whiteSpace: 'nowrap',
+              fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap',
             }}
           >
             Verify
@@ -197,36 +170,22 @@ export default function Captcha({ onVerify }) {
         </div>
       ) : (
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          background: '#f0fdf4',
-          border: '2px solid #16a34a',
-          color: '#16a34a',
-          fontWeight: '600',
-          fontSize: '14px',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '12px 16px', borderRadius: '8px',
+          background: '#f0fdf4', border: '2px solid #16a34a',
+          color: '#16a34a', fontWeight: '600', fontSize: '14px',
         }}>
           ✅ Captcha verified successfully!
         </div>
       )}
 
       {error && (
-        <p style={{
-          color: '#dc2626',
-          fontSize: '12px',
-          margin: '6px 0 0',
-        }}>
+        <p style={{ color: '#dc2626', fontSize: '12px', margin: '6px 0 0' }}>
           ⚠️ {error}
         </p>
       )}
 
-      <p style={{
-        color: '#94a3b8',
-        fontSize: '11px',
-        margin: '6px 0 0',
-      }}>
+      <p style={{ color: '#94a3b8', fontSize: '11px', margin: '6px 0 0' }}>
         💡 Click image or 🔄 to refresh
       </p>
     </div>
