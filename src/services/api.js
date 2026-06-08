@@ -65,13 +65,18 @@ export const employeesAPI = {
   getDashboardStats: () => api.get('/employees/dashboard-stats/'),
 };
 
-// ── ATTENDANCE ────────────────────────────────────────────────
+// ── ATTENDANCE ─────────────────────────────────────────────
 export const attendanceAPI = {
-  checkIn:       () => api.post('/attendance/check_in/'),
-  checkOut:      () => api.post('/attendance/check_out/'),
-  getMine:       (params) => api.get('/attendance/', { params }),
-  getAll:        (params) => api.get('/attendance/', { params }),
-  todaySummary:  () => api.get('/attendance/today_summary/'),
+  checkIn:          () => api.post('/attendance/check_in/'),
+  checkOut:         () => api.post('/attendance/check_out/'),
+  getMine:          (params) => api.get('/attendance/', { params }),
+  getAll:           (params) => api.get('/attendance/', { params }),
+  todaySummary:     () => api.get('/attendance/today_summary/'),
+
+  // ── Face Recognition ──────────────────────────────────
+  faceStatus:       () => api.get('/attendance/face-status/'),
+  registerFace:     (image) => api.post('/attendance/register-face/', { image }),
+  faceCheckIn:      (image) => api.post('/attendance/face-checkin/', { image }),
 };
 
 // ── LEAVES ────────────────────────────────────────────────────
