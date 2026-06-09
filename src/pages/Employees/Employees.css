@@ -65,3 +65,195 @@
   transition:all .2s;
 }
 .view-btn.active { background:rgba(99,102,241,.2);color:#818cf8; }
+
+/* ══════════════════════════════════════════════════════════
+   ADD THESE STYLES to your existing Employees.css
+   (append to the bottom of the file)
+══════════════════════════════════════════════════════════ */
+
+/* ── Action buttons row ──────────────────────────────────── */
+.action-btns {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Base action button ───────────────────────────────────── */
+.act-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* ── View button (👁️) ────────────────────────────────────── */
+.act-btn.info {
+  background: rgba(79, 142, 247, 0.12);
+  color: #4f8ef7;
+  border: 1px solid rgba(79, 142, 247, 0.25);
+}
+.act-btn.info:hover {
+  background: rgba(79, 142, 247, 0.25);
+  transform: scale(1.08);
+}
+
+/* ── Edit button (✏️) ────────────────────────────────────── */
+.act-btn.edit {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+.act-btn.edit:hover {
+  background: rgba(251, 191, 36, 0.25);
+  transform: scale(1.08);
+}
+
+/* ── Delete button (🗑️) ──────────────────────────────────── */
+.act-btn.danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.act-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.08);
+}
+
+/* ── Modal form two-column grid ──────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.two-col .span2 {
+  grid-column: 1 / -1;
+}
+
+/* ── Modal field ─────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e8eaf2;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(79, 142, 247, 0.5);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 68px;
+}
+
+.field-err {
+  font-size: 11px;
+  color: #f87171;
+  margin: 0;
+}
+
+/* ── Modal buttons ───────────────────────────────────────── */
+.btn-primary {
+  background: #4f8ef7;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background: #6aa0ff; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #e8eaf2; }
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.35); }
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+  .two-col .span2 {
+    grid-column: 1;
+  }
+}

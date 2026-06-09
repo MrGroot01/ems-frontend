@@ -17,6 +17,8 @@ import Notifications   from '../pages/Notifications/Notifications';
 import Settings        from '../pages/Settings/Settings';
 import AIAssistant from '../pages/AIAssistant/AIAssistant';
 import Profile         from '../pages/Profile/Profile';
+import Courses from '../pages/Courses/Courses';
+
 
 const Guard = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -51,7 +53,10 @@ const AppRoutes = () => {
         <Route path="/admin/settings"       element={<Guard roles={['admin']}><Settings /></Guard>} />
         <Route path="/admin/ai-assistant" element={<Guard roles={['admin']}><AIAssistant /></Guard>} />
 
+        <Route path="/admin/courses"      element={<Guard roles={['admin']}><Courses /></Guard>} />
+        <Route path="/employee/courses"           element={<Guard roles={['employee']}><Courses /></Guard>} />
 
+        
         {/* Employee */}
         <Route path="/employee"                  element={<Guard roles={['employee']}><EmployeeDashboard /></Guard>} />
         <Route path="/employee/profile"          element={<Guard roles={['employee']}><Profile /></Guard>} />
@@ -62,6 +67,8 @@ const AppRoutes = () => {
         <Route path="/employee/notifications"    element={<Guard roles={['employee']}><Notifications /></Guard>} />
         <Route path="/employee/ai-assistant" element={<Guard roles={['employee']}><AIAssistant /></Guard>} />
       </Routes>
+
+
     </BrowserRouter>
   );
 };

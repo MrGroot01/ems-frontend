@@ -18,6 +18,7 @@ const ADMIN_MENU = [
   { ico:'🔔', txt:'Notifications',   path:'/admin/notifications', badge:'notif' },
   { ico:'⚙️', txt:'Settings',        path:'/admin/settings' },
   { ico:'🤖', txt:'AI Assistant', path:'/admin/ai-assistant' },  // ✅ ADDED
+  { ico:'🎓', txt:'Learning', path:'/admin/courses' },
 ];
 
 const EMP_MENU = [
@@ -33,6 +34,7 @@ const EMP_MENU = [
   { section: 'More' },
   { ico:'🔔', txt:'Notifications',path:'/employee/notifications', badge:'notif' },
   { ico:'🤖', txt:'AI Assistant', path:'/employee/ai-assistant' },  // ✅ ADDED
+  { ico:'🎓', txt:'My Courses', path:'/employee/courses' },
 ];
 
 export default function Sidebar({ pendingLeaves = 0, unreadNotifs = 0, mobileOpen, onMobileClose }) {

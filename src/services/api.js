@@ -116,5 +116,23 @@ export const notificationsAPI = {
   broadcast:   (data) => api.post('/notifications/broadcast/', data),
   unreadCount: () => api.get('/notifications/unread_count/'),
 };
+// ── COURSES ───────────────────────────────────────────────
+export const coursesAPI = {
+  getAll:          (params) => api.get('/learning/courses/', { params }),
+  getByDept:       (dept)   => api.get(`/learning/courses/by-department/?dept=${dept}`),
+  create:          (data)   => api.post('/learning/courses/', data),
+  update:          (id, data) => api.patch(`/learning/courses/${id}/`, data),
+  delete:          (id)     => api.delete(`/learning/courses/${id}/`),
+  enroll:          (id, data) => api.post(`/learning/courses/${id}/enroll/`, data),
+
+  getMyEnrollments: ()      => api.get('/learning/enrollments/'),
+  getAllEnrollments: ()      => api.get('/learning/enrollments/'),
+  getStats:         ()      => api.get('/learning/enrollments/stats/'),
+  completeLesson:  (id, lesson_index) =>
+    api.post(`/learning/enrollments/${id}/complete-lesson/`, { lesson_index }),
+  submitQuiz:      (id, answers) =>
+    api.post(`/learning/enrollments/${id}/submit-quiz/`, { answers }),
+};
+
 
 export default api;
