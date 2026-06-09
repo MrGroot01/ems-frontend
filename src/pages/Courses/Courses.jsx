@@ -1,98 +1,235 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar  from '../../components/Navbar/Navbar';
-import { coursesAPI } from '../../services/api';
+import { coursesAPI, notificationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import '../AdminDashboard/AdminDashboard.css';
 
+// ── Department Course Data with YouTube videos ─────────────
 const DEPT_COURSES = {
   engineering: {
-    emoji: '💻',
+    emoji: '💻', label: 'Engineering',
     courses: [
-      { title:'Python',       icon:'🐍', difficulty:'beginner',     duration:10 },
-      { title:'Java',         icon:'☕', difficulty:'intermediate',  duration:12 },
-      { title:'React JS',     icon:'⚛️', difficulty:'intermediate',  duration:8  },
-      { title:'Django',       icon:'🎸', difficulty:'intermediate',  duration:8  },
-      { title:'REST API',     icon:'🔌', difficulty:'intermediate',  duration:6  },
-      { title:'Docker',       icon:'🐳', difficulty:'advanced',      duration:6  },
-      { title:'AWS',          icon:'☁️', difficulty:'advanced',      duration:10 },
-      { title:'DevOps',       icon:'⚙️', difficulty:'advanced',      duration:12 },
-      { title:'System Design',icon:'🏗️', difficulty:'advanced',      duration:8  },
-      { title:'SQL',          icon:'🗄️', difficulty:'beginner',      duration:6  },
-      { title:'Git & GitHub', icon:'🐙', difficulty:'beginner',      duration:4  },
-      { title:'Linux',        icon:'🐧', difficulty:'intermediate',  duration:6  },
+      {
+        title:'Python', icon:'🐍', difficulty:'beginner', duration:10, price:0,
+        description:'Learn Python from scratch — variables, loops, functions, OOP and more.',
+        videos:[
+          {title:'Python Full Course',  url:'https://www.youtube.com/embed/rfscVS0vtbw', duration:'4:26:52'},
+          {title:'Python OOP',          url:'https://www.youtube.com/embed/JeznW_7DlB0', duration:'1:55:00'},
+          {title:'Python Projects',     url:'https://www.youtube.com/embed/8ext9G7xspg', duration:'1:00:00'},
+        ],
+        coding:{ platform:'HackerRank', url:'https://www.hackerrank.com/domains/python', label:'Python Challenges' },
+      },
+      {
+        title:'React JS', icon:'⚛️', difficulty:'intermediate', duration:8, price:0,
+        description:'Build modern UIs with React — components, hooks, state management.',
+        videos:[
+          {title:'React JS Full Course', url:'https://www.youtube.com/embed/w7ejDZ8SWv8', duration:'1:49:37'},
+          {title:'React Hooks',          url:'https://www.youtube.com/embed/TNhaISOUy6Q', duration:'1:00:00'},
+        ],
+        coding:{ platform:'LeetCode',   url:'https://leetcode.com/tag/dynamic-programming/', label:'Frontend Challenges' },
+      },
+      {
+        title:'Django', icon:'🎸', difficulty:'intermediate', duration:8, price:0,
+        description:'Build powerful web apps with Django REST Framework.',
+        videos:[
+          {title:'Django Crash Course', url:'https://www.youtube.com/embed/UmljXZIypDc', duration:'1:11:39'},
+          {title:'Django REST API',     url:'https://www.youtube.com/embed/i5JykvxUk_A', duration:'2:00:00'},
+        ],
+        coding:{ platform:'HackerRank', url:'https://www.hackerrank.com/domains/python', label:'Python/Django Challenges' },
+      },
+      {
+        title:'SQL', icon:'🗄️', difficulty:'beginner', duration:6, price:0,
+        description:'Master SQL — queries, joins, indexes and database design.',
+        videos:[
+          {title:'SQL Full Course', url:'https://www.youtube.com/embed/HXV3zeQKqGY', duration:'4:20:00'},
+        ],
+        coding:{ platform:'HackerRank', url:'https://www.hackerrank.com/domains/sql', label:'SQL Challenges' },
+      },
+      {
+        title:'Docker & DevOps', icon:'🐳', difficulty:'advanced', duration:10, price:299,
+        description:'Master containerization, CI/CD, and cloud deployment.',
+        videos:[
+          {title:'Docker Full Course', url:'https://www.youtube.com/embed/fqMOX6JJhGo', duration:'2:10:00'},
+          {title:'DevOps Roadmap',     url:'https://www.youtube.com/embed/0yWAtQ6wYNM', duration:'1:00:00'},
+        ],
+        coding:{ platform:'KodeKloud', url:'https://kodekloud.com/', label:'DevOps Labs' },
+      },
+      {
+        title:'System Design', icon:'🏗️', difficulty:'advanced', duration:12, price:499,
+        description:'Design scalable systems — a must for senior engineers.',
+        videos:[
+          {title:'System Design Basics', url:'https://www.youtube.com/embed/MbjObHmDbZo', duration:'1:00:00'},
+          {title:'System Design Interview', url:'https://www.youtube.com/embed/UzLMhqg3_Wc', duration:'1:30:00'},
+        ],
+        coding:{ platform:'LeetCode', url:'https://leetcode.com/discuss/interview-question?currentPage=1&orderBy=hot&query=system+design', label:'System Design Questions' },
+      },
     ],
   },
   hr: {
-    emoji: '👥',
+    emoji: '👥', label: 'HR',
     courses: [
-      { title:'Recruitment Process',    icon:'🔍', difficulty:'beginner',    duration:6  },
-      { title:'Employee Onboarding',    icon:'🤝', difficulty:'beginner',    duration:4  },
-      { title:'Payroll Management',     icon:'💰', difficulty:'intermediate',duration:8  },
-      { title:'Performance Management', icon:'📊', difficulty:'intermediate',duration:6  },
-      { title:'Labor Laws',             icon:'⚖️', difficulty:'intermediate',duration:8  },
-      { title:'HR Analytics',           icon:'📈', difficulty:'advanced',    duration:10 },
-      { title:'MS Excel',               icon:'📗', difficulty:'beginner',    duration:6  },
+      {
+        title:'Recruitment Process', icon:'🔍', difficulty:'beginner', duration:6, price:0,
+        description:'Learn end-to-end recruitment — sourcing, screening, and hiring.',
+        videos:[
+          {title:'Recruitment 101', url:'https://www.youtube.com/embed/2pB5n0l9T6Q', duration:'45:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'HR Analytics', icon:'📈', difficulty:'advanced', duration:10, price:299,
+        description:'Use data to make better HR decisions.',
+        videos:[
+          {title:'HR Analytics Course', url:'https://www.youtube.com/embed/YRp_7nEbM98', duration:'1:30:00'},
+        ],
+        coding:{ platform:'Kaggle', url:'https://www.kaggle.com/learn', label:'Data Practice' },
+      },
+      {
+        title:'MS Excel for HR', icon:'📗', difficulty:'beginner', duration:6, price:0,
+        description:'Excel skills every HR professional needs.',
+        videos:[
+          {title:'Excel Full Tutorial', url:'https://www.youtube.com/embed/Vl0H-qTclOg', duration:'2:00:00'},
+        ],
+        coding: null,
+      },
     ],
   },
   finance: {
-    emoji: '💼',
+    emoji: '💼', label: 'Finance',
     courses: [
-      { title:'Accounting Basics',   icon:'📒', difficulty:'beginner',    duration:8  },
-      { title:'GST',                 icon:'🏛️', difficulty:'intermediate',duration:6  },
-      { title:'Tally',               icon:'🧮', difficulty:'intermediate',duration:8  },
-      { title:'Financial Reporting', icon:'📊', difficulty:'intermediate',duration:6  },
-      { title:'Advanced Excel',      icon:'📗', difficulty:'intermediate',duration:8  },
-      { title:'Power BI',            icon:'📉', difficulty:'advanced',    duration:10 },
-      { title:'SAP Finance',         icon:'🏢', difficulty:'advanced',    duration:12 },
+      {
+        title:'Accounting Basics', icon:'📒', difficulty:'beginner', duration:8, price:0,
+        description:'Understand debits, credits, and financial statements.',
+        videos:[
+          {title:'Accounting Basics', url:'https://www.youtube.com/embed/yYX4bvQSqbo', duration:'1:45:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'Power BI', icon:'📉', difficulty:'advanced', duration:10, price:399,
+        description:'Create stunning dashboards with Microsoft Power BI.',
+        videos:[
+          {title:'Power BI Full Course', url:'https://www.youtube.com/embed/TmhQCQr_Qqc', duration:'3:00:00'},
+        ],
+        coding:{ platform:'Kaggle', url:'https://www.kaggle.com/learn/data-visualization', label:'Data Viz Practice' },
+      },
     ],
   },
   operations: {
-    emoji: '🔧',
+    emoji: '🔧', label: 'Operations',
     courses: [
-      { title:'Manual Testing',    icon:'🧪', difficulty:'beginner',    duration:6  },
-      { title:'Selenium',          icon:'🤖', difficulty:'intermediate',duration:10 },
-      { title:'API Testing',       icon:'🔌', difficulty:'intermediate',duration:6  },
-      { title:'Postman',           icon:'📮', difficulty:'beginner',    duration:4  },
-      { title:'JMeter',            icon:'⚡', difficulty:'intermediate',duration:6  },
-      { title:'Bug Tracking JIRA', icon:'🐛', difficulty:'beginner',    duration:4  },
-      { title:'Agile Methodology', icon:'🔄', difficulty:'intermediate',duration:6  },
+      {
+        title:'Manual Testing', icon:'🧪', difficulty:'beginner', duration:6, price:0,
+        description:'Learn software testing fundamentals and test case writing.',
+        videos:[
+          {title:'Manual Testing Full Course', url:'https://www.youtube.com/embed/Nd7SnZjDfNg', duration:'3:00:00'},
+        ],
+        coding:{ platform:'HackerRank', url:'https://www.hackerrank.com/', label:'Practice Challenges' },
+      },
+      {
+        title:'Selenium Automation', icon:'🤖', difficulty:'intermediate', duration:10, price:0,
+        description:'Automate browser testing with Selenium WebDriver.',
+        videos:[
+          {title:'Selenium Full Course', url:'https://www.youtube.com/embed/j7VZsCCnptM', duration:'4:00:00'},
+        ],
+        coding:{ platform:'LeetCode', url:'https://leetcode.com/', label:'Coding Challenges' },
+      },
+      {
+        title:'API Testing with Postman', icon:'📮', difficulty:'beginner', duration:4, price:0,
+        description:'Test REST APIs professionally using Postman.',
+        videos:[
+          {title:'Postman Tutorial', url:'https://www.youtube.com/embed/VywxIQ2ZXw4', duration:'1:30:00'},
+        ],
+        coding:{ platform:'Postman', url:'https://learning.postman.com/', label:'Postman Learning' },
+      },
     ],
   },
   marketing: {
-    emoji: '📣',
+    emoji: '📣', label: 'Marketing',
     courses: [
-      { title:'Digital Marketing',    icon:'🌐', difficulty:'beginner',    duration:8  },
-      { title:'SEO',                  icon:'🔍', difficulty:'intermediate',duration:6  },
-      { title:'Google Ads',           icon:'📢', difficulty:'intermediate',duration:6  },
-      { title:'Content Marketing',    icon:'✍️', difficulty:'beginner',    duration:6  },
-      { title:'Social Media Marketing',icon:'📱',difficulty:'beginner',    duration:6  },
-      { title:'Analytics',            icon:'📊', difficulty:'intermediate',duration:8  },
+      {
+        title:'Digital Marketing', icon:'🌐', difficulty:'beginner', duration:8, price:0,
+        description:'Master SEO, social media, email marketing and analytics.',
+        videos:[
+          {title:'Digital Marketing Full Course', url:'https://www.youtube.com/embed/nU-IIXBWlS4', duration:'4:40:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'Google Ads', icon:'📢', difficulty:'intermediate', duration:6, price:199,
+        description:'Run profitable Google Ads campaigns.',
+        videos:[
+          {title:'Google Ads Tutorial', url:'https://www.youtube.com/embed/cLlE_CgMELc', duration:'2:00:00'},
+        ],
+        coding: null,
+      },
     ],
   },
   design: {
-    emoji: '🎨',
+    emoji: '🎨', label: 'Design',
     courses: [
-      { title:'UI Design',      icon:'🖥️', difficulty:'beginner',    duration:8  },
-      { title:'UX Design',      icon:'🎯', difficulty:'intermediate',duration:10 },
-      { title:'Figma',          icon:'🎨', difficulty:'beginner',    duration:6  },
-      { title:'Adobe XD',       icon:'✨', difficulty:'intermediate',duration:8  },
-      { title:'Photoshop',      icon:'🖼️', difficulty:'intermediate',duration:8  },
-      { title:'Design Systems', icon:'🔲', difficulty:'advanced',    duration:8  },
+      {
+        title:'UI Design', icon:'🖥️', difficulty:'beginner', duration:8, price:0,
+        description:'Learn UI design principles, color theory, and typography.',
+        videos:[
+          {title:'UI Design Tutorial', url:'https://www.youtube.com/embed/c9Wg6Cb_YlU', duration:'2:00:00'},
+          {title:'UI Design Principles', url:'https://www.youtube.com/embed/tRpoI6vkoxI', duration:'1:00:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'Figma', icon:'🎨', difficulty:'beginner', duration:6, price:0,
+        description:'Design beautiful interfaces with Figma.',
+        videos:[
+          {title:'Figma Full Course', url:'https://www.youtube.com/embed/1pW_sk-2y40', duration:'3:00:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'UX Design Advanced', icon:'🎯', difficulty:'advanced', duration:10, price:399,
+        description:'Advanced UX research, usability testing and design systems.',
+        videos:[
+          {title:'UX Design Course', url:'https://www.youtube.com/embed/uL2ZB7XXIgg', duration:'2:00:00'},
+        ],
+        coding: null,
+      },
     ],
   },
   sales: {
-    emoji: '💹',
+    emoji: '💹', label: 'Sales',
     courses: [
-      { title:'Sales Fundamentals',     icon:'💡', difficulty:'beginner',    duration:6  },
-      { title:'Lead Generation',        icon:'🎯', difficulty:'beginner',    duration:4  },
-      { title:'CRM Tools',              icon:'🔗', difficulty:'intermediate',duration:6  },
-      { title:'Negotiation Skills',     icon:'🤝', difficulty:'intermediate',duration:6  },
-      { title:'B2B Sales',              icon:'🏢', difficulty:'advanced',    duration:8  },
-      { title:'Sales Analytics',        icon:'📊', difficulty:'advanced',    duration:8  },
+      {
+        title:'Sales Fundamentals', icon:'💡', difficulty:'beginner', duration:6, price:0,
+        description:'Master the art of selling — prospecting, pitching, and closing.',
+        videos:[
+          {title:'Sales Training', url:'https://www.youtube.com/embed/mTRqVCBXHg8', duration:'1:30:00'},
+        ],
+        coding: null,
+      },
+      {
+        title:'CRM Tools', icon:'🔗', difficulty:'intermediate', duration:6, price:199,
+        description:'Use Salesforce and HubSpot to manage your sales pipeline.',
+        videos:[
+          {title:'CRM Tutorial', url:'https://www.youtube.com/embed/TGBQ0c1xMQg', duration:'1:00:00'},
+        ],
+        coding: null,
+      },
     ],
   },
 };
+
+// ── Coding platforms ────────────────────────────────────────
+const CODING_PLATFORMS = [
+  { name:'LeetCode',   url:'https://leetcode.com/',                    icon:'⚡', color:'#FFA116', desc:'Algorithm challenges' },
+  { name:'HackerRank', url:'https://www.hackerrank.com/',              icon:'💚', color:'#00EA64', desc:'Coding certifications' },
+  { name:'CodeChef',   url:'https://www.codechef.com/',                icon:'👨‍🍳', color:'#5B4638', desc:'Competitive programming' },
+  { name:'Codeforces', url:'https://codeforces.com/',                  icon:'🔵', color:'#1194F6', desc:'Math & algorithms' },
+  { name:'GeeksForGeeks', url:'https://practice.geeksforgeeks.org/',   icon:'🟢', color:'#2F8D46', desc:'CS fundamentals' },
+  { name:'Kaggle',     url:'https://www.kaggle.com/learn',             icon:'🔷', color:'#20BEFF', desc:'Data science' },
+  { name:'SQLZoo',     url:'https://sqlzoo.net/',                      icon:'🗄️', color:'#4CAF50', desc:'SQL practice' },
+  { name:'Exercism',   url:'https://exercism.org/',                    icon:'🟣', color:'#A400FF', desc:'Multi-language practice' },
+];
 
 const DIFF_COLOR = {
   beginner:     { bg:'rgba(16,185,129,.15)', text:'#34d399', border:'rgba(16,185,129,.3)'  },
@@ -100,28 +237,42 @@ const DIFF_COLOR = {
   advanced:     { bg:'rgba(239,68,68,.15)',  text:'#f87171', border:'rgba(239,68,68,.3)'   },
 };
 
+function DiffBadge({ d }) {
+  const c = DIFF_COLOR[d] || DIFF_COLOR.beginner;
+  return (
+    <span style={{
+      padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:600,
+      background:c.bg, color:c.text, border:`1px solid ${c.border}`,
+    }}>{d}</span>
+  );
+}
+
 export default function Courses() {
   const { user, isAdmin } = useAuth();
-  const [mobileOpen,   setMobileOpen]   = useState(false);
-  const [enrollments,  setEnrollments]  = useState([]);
-  const [allCourses,   setAllCourses]   = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [stats,        setStats]        = useState(null);
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [enrollments,   setEnrollments]   = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [stats,         setStats]         = useState(null);
+  const [activeView,    setActiveView]    = useState('my');
+  const [successMsg,    setSuccessMsg]    = useState('');
+  const [errorMsg,      setErrorMsg]      = useState('');
 
-  // Modals
-  const [activeView,   setActiveView]   = useState('my');  // my | all | admin
+  // Course detail modal
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [quizMode,     setQuizMode]     = useState(false);
-  const [quizAnswers,  setQuizAnswers]  = useState({});
-  const [quizResult,   setQuizResult]   = useState(null);
-  const [saving,       setSaving]       = useState(false);
-  const [successMsg,   setSuccessMsg]   = useState('');
+  const [activeVideo,    setActiveVideo]    = useState(0);
 
-  // Admin create course
-  const [showCreate,   setShowCreate]   = useState(false);
-  const [createForm,   setCreateForm]   = useState({
-    dept:'engineering', courseIdx:0,
-  });
+  // Quiz
+  const [quizMode,    setQuizMode]    = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [quizResult,  setQuizResult]  = useState(null);
+  const [saving,      setSaving]      = useState(false);
+
+  // Admin assign modal
+  const [showAssign,  setShowAssign]  = useState(false);
+  const [assignForm,  setAssignForm]  = useState({ dept:'engineering', courseIdx:0 });
+
+  // Pending paid requests (admin)
+  const [paidRequests, setPaidRequests] = useState([]);
 
   const userDept = (user?.department || '').toLowerCase();
 
@@ -145,26 +296,36 @@ export default function Courses() {
     } finally { setLoading(false); }
   };
 
-  // ── Complete a lesson ────────────────────────────────────
+  const showSuccess = (msg) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 4000);
+  };
+
+  const showError = (msg) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 4000);
+  };
+
+  // ── Complete lesson ──────────────────────────────────────
   const handleLessonComplete = async (enrollmentId, lessonIdx) => {
     try {
       const res = await coursesAPI.completeLesson(enrollmentId, lessonIdx);
       setEnrollments(prev =>
         prev.map(e => e.id === enrollmentId ? res.data : e)
       );
-      if (selectedCourse) {
-        setSelectedCourse(prev => ({
-          ...prev,
-          enrollment: res.data,
-        }));
+      if (selectedCourse?.enrollment?.id === enrollmentId) {
+        setSelectedCourse(prev => ({ ...prev, enrollment: res.data }));
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   // ── Submit quiz ──────────────────────────────────────────
   const handleQuizSubmit = async () => {
+    const quiz = selectedCourse?.enrollment?.course_quiz || [];
+    if (Object.keys(quizAnswers).length < quiz.length) {
+      showError('Please answer all questions before submitting!');
+      return;
+    }
     setSaving(true);
     try {
       const res = await coursesAPI.submitQuiz(
@@ -177,200 +338,248 @@ export default function Courses() {
         )
       );
     } catch (err) {
-      console.error(err);
+      showError(err.response?.data?.error || 'Quiz submission failed');
     } finally { setSaving(false); }
   };
 
-  // ── Admin: assign course to dept ─────────────────────────
-  const handleAssignCourse = async () => {
-    const dept     = createForm.dept;
-    const deptData = DEPT_COURSES[dept];
-    if (!deptData) return;
+  // ── Request paid course ──────────────────────────────────
+  const handleRequestPaidCourse = async (course, dept) => {
+    try {
+      // Send notification to admin
+      await notificationsAPI.broadcast({
+        title:   `💳 Paid Course Request: ${course.title}`,
+        message: `${user?.full_name} (${user?.department}) has requested access to the paid course "${course.title}" (₹${course.price}). Please review and assign.`,
+        type:    'task',
+      });
+      showSuccess(`✅ Request sent! Admin will review your request for "${course.title}"`);
+    } catch {
+      showError('Failed to send request. Please try again.');
+    }
+  };
 
-    const courseTemplate = deptData.courses[createForm.courseIdx];
-    if (!courseTemplate) return;
+  // ── Admin assign course ──────────────────────────────────
+  const handleAssignCourse = async () => {
+    const dept       = assignForm.dept;
+    const courseData = DEPT_COURSES[dept]?.courses[assignForm.courseIdx];
+    if (!courseData) return;
 
     setSaving(true);
     try {
-      // Create course
       const lessons = [
-        `Introduction to ${courseTemplate.title}`,
-        `${courseTemplate.title} Fundamentals`,
-        `${courseTemplate.title} Practice`,
-        `Advanced ${courseTemplate.title}`,
-        `${courseTemplate.title} Projects`,
+        `Introduction to ${courseData.title}`,
+        `${courseData.title} Fundamentals`,
+        `${courseData.title} Practice`,
+        `Advanced ${courseData.title}`,
+        `${courseData.title} Projects`,
       ];
 
-      const quiz = [
-        { question: `What is ${courseTemplate.title}?`,
-          options: ['A tool', 'A language', 'A framework', 'A concept'],
-          answer:  '1' },
-        { question: `${courseTemplate.title} is mainly used for?`,
-          options: ['Gaming', 'Web Development', 'Both', 'None'],
-          answer:  '2' },
-        { question: `Which company created ${courseTemplate.title}?`,
-          options: ['Google', 'Microsoft', 'Various', 'Apple'],
-          answer:  '2' },
-        { question: `Is ${courseTemplate.title} still relevant in 2025?`,
-          options: ['Yes', 'No', 'Maybe', 'Partially'],
-          answer:  '0' },
-        { question: `${courseTemplate.title} certification helps in?`,
-          options: ['Nothing', 'Career Growth', 'Salary Cut', 'Only fun'],
-          answer:  '1' },
-      ];
+      // Generate proper quiz questions based on course
+      const quiz = generateQuiz(courseData.title, courseData.videos);
 
       const courseRes = await coursesAPI.create({
-        title:        courseTemplate.title,
-        description:  `Master ${courseTemplate.title} with this comprehensive course designed for ${dept} professionals.`,
+        title:        courseData.title,
+        description:  courseData.description,
         department:   dept,
-        difficulty:   courseTemplate.difficulty,
-        duration_hrs: courseTemplate.duration,
-        thumbnail:    courseTemplate.icon,
+        difficulty:   courseData.difficulty,
+        duration_hrs: courseData.duration,
+        thumbnail:    courseData.icon,
         lessons,
         quiz,
         pass_score:   70,
       });
 
-      // Enroll all dept employees
       await coursesAPI.enroll(courseRes.data.id, {});
-
-      setSuccessMsg(`✅ "${courseTemplate.title}" course assigned to all ${dept} employees!`);
-      setTimeout(() => setSuccessMsg(''), 4000);
-      setShowCreate(false);
+      showSuccess(`✅ "${courseData.title}" assigned to all ${dept} employees!`);
+      setShowAssign(false);
       fetchData();
     } catch (err) {
+      showError('Failed to assign course');
       console.error(err);
     } finally { setSaving(false); }
   };
 
-  // ── My dept courses (unenrolled ones shown as available) ─
-  const myDeptCourses = DEPT_COURSES[userDept]?.courses || [];
-  const enrolledTitles = enrollments.map(e => e.course_title);
+  // ── Generate proper quiz questions ───────────────────────
+  const generateQuiz = (title, videos) => {
+    const quizBank = {
+      'Python': [
+        { question:'What is Python primarily used for?',
+          options:['Gaming only','Web & Data Science','MS Office only','Networking only'],
+          answer:'1' },
+        { question:'Which keyword defines a function in Python?',
+          options:['func','define','def','function'],
+          answer:'2' },
+        { question:'What is the output of print(type([]))?',
+          options:["<class 'dict'>",'<class "list">',"<class 'list'>","<class 'tuple'>"],
+          answer:'2' },
+        { question:'Which loop is used when iterations are unknown?',
+          options:['for loop','while loop','do-while','foreach'],
+          answer:'1' },
+        { question:'What does OOP stand for?',
+          options:['Object Oriented Programming','Open Object Protocol','Only One Process','None'],
+          answer:'0' },
+      ],
+      'React JS': [
+        { question:'What is JSX?',
+          options:['JavaScript XML','Java Syntax Extension','jQuery X','None'],
+          answer:'0' },
+        { question:'Which hook manages state in React?',
+          options:['useEffect','useRef','useState','useContext'],
+          answer:'2' },
+        { question:'What is a React component?',
+          options:['A database','A reusable UI piece','A CSS file','A server'],
+          answer:'1' },
+        { question:'How do you pass data to a child component?',
+          options:['Via state','Via props','Via context only','Via refs'],
+          answer:'1' },
+        { question:'What does useEffect do?',
+          options:['Manages state','Handles side effects','Creates components','Styles elements'],
+          answer:'1' },
+      ],
+      'Django': [
+        { question:'Django is a framework for which language?',
+          options:['JavaScript','Ruby','Python','Java'],
+          answer:'2' },
+        { question:'What does ORM stand for in Django?',
+          options:['Object Relational Mapper','Online Resource Manager','Open REST Module','None'],
+          answer:'0' },
+        { question:'Which file defines URL patterns in Django?',
+          options:['models.py','views.py','urls.py','settings.py'],
+          answer:'2' },
+        { question:'What is a Django serializer used for?',
+          options:['CSS styling','Convert complex data to JSON','Database creation','URL routing'],
+          answer:'1' },
+        { question:'Which decorator restricts API access in DRF?',
+          options:['@login','@permission_classes','@secure','@auth_required'],
+          answer:'1' },
+      ],
+    };
 
-  const diffBadge = (d) => {
-    const c = DIFF_COLOR[d] || DIFF_COLOR.beginner;
-    return (
-      <span style={{
-        padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:600,
-        background:c.bg, color:c.text, border:`1px solid ${c.border}`,
-      }}>
-        {d}
-      </span>
-    );
+    // Return specific quiz or generate generic one
+    if (quizBank[title]) return quizBank[title];
+
+    return [
+      { question:`What is ${title} primarily used for?`,
+        options:['Data storage','Core functionality','Gaming','None of these'],
+        answer:'1' },
+      { question:`${title} is classified as?`,
+        options:['A hardware tool','A software tool','A protocol','A language'],
+        answer:'1' },
+      { question:`Who can benefit most from learning ${title}?`,
+        options:['Only developers','All professionals','Only managers','Only designers'],
+        answer:'1' },
+      { question:`What skill does ${title} improve?`,
+        options:['Physical fitness','Technical proficiency','Cooking','Driving'],
+        answer:'1' },
+      { question:`After completing ${title}, you can?`,
+        options:['Do nothing new','Apply skills to real projects','Only teach others','Only read docs'],
+        answer:'1' },
+    ];
   };
+
+  const enrolledTitles = enrollments.map(e => e.course_title);
 
   return (
     <div className="dash-layout">
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div className="dash-main">
-        <Navbar title="Learning Center" subtitle="Courses & Certifications"
+        <Navbar title="🎓 Learning Center" subtitle="Courses & Certifications"
           onMenuClick={() => setMobileOpen(true)} />
         <div className="dash-content">
 
+          {/* Messages */}
           {successMsg && (
             <div style={{
-              background:'rgba(16,185,129,.12)',
-              border:'1px solid rgba(16,185,129,.3)',
-              borderRadius:12, padding:'12px 18px',
-              color:'#34d399', fontSize:14,
-              fontWeight:600, marginBottom:20,
-            }}>
-              {successMsg}
-            </div>
+              background:'rgba(16,185,129,.12)',border:'1px solid rgba(16,185,129,.3)',
+              borderRadius:12,padding:'12px 18px',color:'#34d399',
+              fontSize:14,fontWeight:600,marginBottom:20,
+            }}>{successMsg}</div>
+          )}
+          {errorMsg && (
+            <div style={{
+              background:'rgba(239,68,68,.12)',border:'1px solid rgba(239,68,68,.3)',
+              borderRadius:12,padding:'12px 18px',color:'#f87171',
+              fontSize:14,fontWeight:600,marginBottom:20,
+            }}>{errorMsg}</div>
           )}
 
-          {/* ── Header ── */}
+          {/* Header */}
           <div className="page-header">
             <div>
               <h1>🎓 Learning Center</h1>
-              <p>
-                {isAdmin()
-                  ? `Manage courses for all departments`
-                  : `${userDept.charAt(0).toUpperCase()+userDept.slice(1)} Department Courses`}
-              </p>
+              <p>{isAdmin() ? 'Manage all department courses' : `${userDept} department courses`}</p>
             </div>
             {isAdmin() && (
-              <button className="qa-btn primary"
-                onClick={() => setShowCreate(true)}>
+              <button className="qa-btn primary" onClick={() => setShowAssign(true)}>
                 ➕ Assign Course
               </button>
             )}
           </div>
 
-          {/* ── Admin Stats ── */}
+          {/* Admin stats */}
           {isAdmin() && stats && (
             <div style={{
               display:'grid',
-              gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',
-              gap:12, marginBottom:24,
+              gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',
+              gap:12,marginBottom:24,
             }}>
               {[
-                {label:'Total Enrollments', value:stats.total,       color:'#a5b4fc', icon:'📚'},
-                {label:'Completed',         value:stats.completed,   color:'#34d399', icon:'✅'},
-                {label:'In Progress',       value:stats.in_progress, color:'#60a5fa', icon:'🔄'},
-                {label:'Certificates',      value:stats.certified,   color:'#fbbf24', icon:'🏆'},
+                {label:'Enrollments', value:stats.total,       color:'#a5b4fc', icon:'📚'},
+                {label:'Completed',   value:stats.completed,   color:'#34d399', icon:'✅'},
+                {label:'In Progress', value:stats.in_progress, color:'#60a5fa', icon:'🔄'},
+                {label:'Certified',   value:stats.certified,   color:'#fbbf24', icon:'🏆'},
               ].map(s => (
                 <div key={s.label} style={{
                   background:'rgba(255,255,255,0.04)',
                   border:'1px solid rgba(255,255,255,0.08)',
-                  borderRadius:14, padding:'16px', textAlign:'center',
+                  borderRadius:14,padding:'16px',textAlign:'center',
                 }}>
-                  <div style={{fontSize:28, marginBottom:6}}>{s.icon}</div>
-                  <div style={{color:s.color,fontSize:26,fontWeight:800}}>{s.value}</div>
-                  <div style={{color:'#64748b',fontSize:12,marginTop:4}}>{s.label}</div>
+                  <div style={{fontSize:26}}>{s.icon}</div>
+                  <div style={{color:s.color,fontSize:24,fontWeight:800}}>{s.value}</div>
+                  <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{s.label}</div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ── Tabs ── */}
+          {/* Tabs */}
           <div style={{
-            display:'flex', gap:8, marginBottom:24,
+            display:'flex',gap:4,marginBottom:24,
             borderBottom:'1px solid rgba(255,255,255,0.06)',
-            paddingBottom:0,
           }}>
             {[
-              {key:'my',    label:'📚 My Courses'},
+              {key:'my',      label:'📚 My Courses'},
               ...(isAdmin() ? [{key:'all', label:'👥 All Enrollments'}] : []),
-              {key:'browse', label:'🌐 Browse Courses'},
+              {key:'browse',  label:'🌐 Browse'},
+              {key:'coding',  label:'💻 Coding Practice'},
             ].map(tab => (
-              <button key={tab.key}
-                onClick={() => setActiveView(tab.key)}
+              <button key={tab.key} onClick={() => setActiveView(tab.key)}
                 style={{
-                  padding:'10px 18px', border:'none',
-                  background:'transparent', cursor:'pointer',
-                  fontSize:14, fontWeight:600,
+                  padding:'10px 16px',border:'none',background:'transparent',
+                  cursor:'pointer',fontSize:13,fontWeight:600,
                   color: activeView===tab.key ? '#a5b4fc' : '#64748b',
-                  borderBottom: activeView===tab.key
-                    ? '2px solid #6366f1' : '2px solid transparent',
+                  borderBottom: activeView===tab.key ? '2px solid #6366f1' : '2px solid transparent',
                   marginBottom:-1,
-                  transition:'all 0.2s',
                 }}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* ══════════════════════════════════════════════
-              TAB: MY COURSES
-          ══════════════════════════════════════════════ */}
+          {/* ══ MY COURSES TAB ══ */}
           {activeView === 'my' && (
             <div>
               {loading ? (
                 <div style={{display:'flex',flexWrap:'wrap',gap:16}}>
                   {[1,2,3].map(i =>
-                    <div key={i} className="skeleton"
-                      style={{width:280,height:200,borderRadius:14}}/>
+                    <div key={i} className="skeleton" style={{width:280,height:200,borderRadius:14}}/>
                   )}
                 </div>
               ) : enrollments.length === 0 ? (
-                <div className="empty-state" style={{padding:60}}>
+                <div style={{textAlign:'center',padding:60}}>
                   <div style={{fontSize:60,marginBottom:16}}>📚</div>
-                  <h3 style={{color:'#e2e8f0',marginBottom:8}}>No courses yet</h3>
+                  <h3 style={{color:'#e2e8f0'}}>No courses assigned yet</h3>
                   <p style={{color:'#64748b'}}>
-                    {isAdmin()
-                      ? 'Assign courses to employees from the Browse tab'
-                      : 'Your admin will assign courses to you soon'}
+                    {isAdmin() ? 'Use Browse tab to assign courses' : 'Your admin will assign courses soon'}
                   </p>
                 </div>
               ) : (
@@ -380,87 +589,72 @@ export default function Courses() {
                   gap:16,
                 }}>
                   {enrollments.map(e => (
-                    <div key={e.id}
-                      onClick={() => setSelectedCourse({ enrollment: e })}
-                      style={{
-                        background:'rgba(255,255,255,0.04)',
-                        border:`1px solid ${e.status==='completed'
-                          ? 'rgba(16,185,129,0.3)'
-                          : 'rgba(255,255,255,0.08)'}`,
-                        borderRadius:16, padding:'20px', cursor:'pointer',
-                        transition:'all 0.2s',
-                      }}>
-                      {/* Icon + Title */}
-                      <div style={{
-                        display:'flex', alignItems:'center',
-                        gap:12, marginBottom:12,
-                      }}>
+                    <div key={e.id} onClick={() => {
+                      // Find course data for videos
+                      const deptData = DEPT_COURSES[e.course_dept || e.user_dept];
+                      const courseTemplate = deptData?.courses.find(c => c.title === e.course_title);
+                      setSelectedCourse({
+                        enrollment: e,
+                        template: courseTemplate,
+                      });
+                      setActiveVideo(0);
+                    }} style={{
+                      background:'rgba(255,255,255,0.04)',
+                      border:`1px solid ${e.status==='completed'
+                        ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                      borderRadius:16,padding:20,cursor:'pointer',
+                      transition:'all 0.2s',
+                    }}>
+                      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
                         <div style={{
-                          fontSize:36, width:56, height:56,
+                          fontSize:36,width:56,height:56,
                           background:'rgba(99,102,241,0.15)',
-                          borderRadius:12,
-                          display:'flex', alignItems:'center',
-                          justifyContent:'center', flexShrink:0,
+                          borderRadius:12,display:'flex',
+                          alignItems:'center',justifyContent:'center',
                         }}>
                           {e.course_thumbnail}
                         </div>
                         <div>
-                          <div style={{
-                            color:'#fff', fontWeight:700, fontSize:15,
-                          }}>
+                          <div style={{color:'#fff',fontWeight:700,fontSize:15}}>
                             {e.course_title}
                           </div>
                           <div style={{marginTop:4}}>
-                            {diffBadge(e.course_difficulty)}
+                            <DiffBadge d={e.course_difficulty}/>
                           </div>
                         </div>
                       </div>
-
-                      {/* Progress */}
                       <div style={{marginBottom:10}}>
                         <div style={{
                           display:'flex',justifyContent:'space-between',
                           color:'#94a3b8',fontSize:12,marginBottom:4,
                         }}>
                           <span>Progress</span>
-                          <span style={{color:'#a5b4fc',fontWeight:600}}>
-                            {e.progress}%
-                          </span>
+                          <span style={{color:'#a5b4fc',fontWeight:600}}>{e.progress}%</span>
                         </div>
                         <div style={{
-                          height:6, background:'rgba(255,255,255,0.08)',
+                          height:6,background:'rgba(255,255,255,0.08)',
                           borderRadius:99,overflow:'hidden',
                         }}>
                           <div style={{
-                            height:'100%', borderRadius:99,
+                            height:'100%',borderRadius:99,
                             width:`${e.progress}%`,
                             background: e.status==='completed'
                               ? '#10b981' : 'linear-gradient(90deg,#6366f1,#8b5cf6)',
-                            transition:'width 0.5s ease',
+                            transition:'width 0.5s',
                           }}/>
                         </div>
                       </div>
-
-                      {/* Meta */}
                       <div style={{
-                        display:'flex', justifyContent:'space-between',
-                        alignItems:'center', fontSize:12, color:'#64748b',
+                        display:'flex',justifyContent:'space-between',
+                        fontSize:12,color:'#64748b',
                       }}>
                         <span>⏱️ {e.course_duration}hrs</span>
-                        {e.status === 'completed' && e.certificate_id ? (
-                          <span style={{
-                            color:'#fbbf24', fontWeight:600,
-                          }}>
-                            🏆 Certified
-                          </span>
-                        ) : (
-                          <span style={{
-                            color: e.status==='in_progress' ? '#60a5fa' : '#64748b',
-                            textTransform:'capitalize',
-                          }}>
-                            {e.status.replace('_',' ')}
-                          </span>
-                        )}
+                        {e.certificate_id
+                          ? <span style={{color:'#fbbf24',fontWeight:600}}>🏆 Certified</span>
+                          : <span style={{textTransform:'capitalize'}}>
+                              {e.status.replace('_',' ')}
+                            </span>
+                        }
                       </div>
                     </div>
                   ))}
@@ -469,17 +663,15 @@ export default function Courses() {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════════
-              TAB: ALL ENROLLMENTS (Admin)
-          ══════════════════════════════════════════════ */}
+          {/* ══ ALL ENROLLMENTS (Admin) ══ */}
           {activeView === 'all' && isAdmin() && (
-            <div>
-              <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',minWidth:700}}>
                 <thead>
                   <tr style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-                    {['Employee','Department','Course','Progress','Status','Certificate'].map(h => (
+                    {['Employee','Dept','Course','Progress','Status','Score','Certificate'].map(h => (
                       <th key={h} style={{
-                        color:'#64748b',fontSize:12,fontWeight:600,
+                        color:'#64748b',fontSize:11,fontWeight:600,
                         padding:'10px 12px',textAlign:'left',
                         textTransform:'uppercase',letterSpacing:'0.5px',
                       }}>{h}</th>
@@ -488,16 +680,9 @@ export default function Courses() {
                 </thead>
                 <tbody>
                   {enrollments.map((e,i) => (
-                    <tr key={e.id||i} style={{
-                      borderBottom:'1px solid rgba(255,255,255,0.04)',
-                    }}>
-                      <td style={{padding:'12px',color:'#e2e8f0',fontSize:14}}>
-                        {e.user_name}
-                      </td>
-                      <td style={{
-                        padding:'12px',color:'#94a3b8',
-                        fontSize:13,textTransform:'capitalize',
-                      }}>
+                    <tr key={e.id||i} style={{borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                      <td style={{padding:'12px',color:'#e2e8f0',fontSize:13}}>{e.user_name}</td>
+                      <td style={{padding:'12px',color:'#94a3b8',fontSize:12,textTransform:'capitalize'}}>
                         {e.user_dept||e.course_dept}
                       </td>
                       <td style={{padding:'12px',color:'#e2e8f0',fontSize:13}}>
@@ -506,52 +691,40 @@ export default function Courses() {
                       <td style={{padding:'12px'}}>
                         <div style={{display:'flex',alignItems:'center',gap:8}}>
                           <div style={{
-                            flex:1, height:6,
-                            background:'rgba(255,255,255,0.08)',
-                            borderRadius:99,overflow:'hidden',
-                            minWidth:60,
+                            flex:1,height:5,background:'rgba(255,255,255,0.08)',
+                            borderRadius:99,overflow:'hidden',minWidth:60,
                           }}>
                             <div style={{
-                              height:'100%',
-                              width:`${e.progress}%`,
+                              height:'100%',width:`${e.progress}%`,
                               background:'linear-gradient(90deg,#6366f1,#8b5cf6)',
                               borderRadius:99,
                             }}/>
                           </div>
-                          <span style={{color:'#a5b4fc',fontSize:12}}>
-                            {e.progress}%
-                          </span>
+                          <span style={{color:'#a5b4fc',fontSize:11}}>{e.progress}%</span>
                         </div>
                       </td>
                       <td style={{padding:'12px'}}>
                         <span style={{
-                          padding:'3px 10px', borderRadius:20, fontSize:12,
-                          fontWeight:600,
-                          background: e.status==='completed'
-                            ? 'rgba(16,185,129,.15)'
-                            : e.status==='in_progress'
-                            ? 'rgba(99,102,241,.15)'
+                          padding:'2px 8px',borderRadius:20,fontSize:11,fontWeight:600,
+                          background: e.status==='completed' ? 'rgba(16,185,129,.15)'
+                            : e.status==='in_progress' ? 'rgba(99,102,241,.15)'
                             : 'rgba(255,255,255,.05)',
                           color: e.status==='completed' ? '#34d399'
-                               : e.status==='in_progress' ? '#a5b4fc'
-                               : '#64748b',
-                          border: `1px solid ${e.status==='completed'
-                            ? 'rgba(16,185,129,.3)'
-                            : e.status==='in_progress'
-                            ? 'rgba(99,102,241,.3)'
-                            : 'rgba(255,255,255,.08)'}`,
+                            : e.status==='in_progress' ? '#a5b4fc' : '#64748b',
+                          border:`1px solid ${e.status==='completed' ? 'rgba(16,185,129,.3)'
+                            : e.status==='in_progress' ? 'rgba(99,102,241,.3)' : 'rgba(255,255,255,.08)'}`,
                           textTransform:'capitalize',
                         }}>
                           {e.status.replace('_',' ')}
                         </span>
                       </td>
-                      <td style={{padding:'12px',fontSize:13}}>
+                      <td style={{padding:'12px',color:'#94a3b8',fontSize:12}}>
+                        {e.quiz_score != null ? `${e.quiz_score}%` : '—'}
+                      </td>
+                      <td style={{padding:'12px',fontSize:12}}>
                         {e.certificate_id
-                          ? <span style={{color:'#fbbf24',fontWeight:600}}>
-                              🏆 {e.certificate_id}
-                            </span>
-                          : <span style={{color:'#475569'}}>—</span>
-                        }
+                          ? <span style={{color:'#fbbf24',fontWeight:600}}>🏆 {e.certificate_id}</span>
+                          : <span style={{color:'#475569'}}>—</span>}
                       </td>
                     </tr>
                   ))}
@@ -560,79 +733,112 @@ export default function Courses() {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════════
-              TAB: BROWSE COURSES
-          ══════════════════════════════════════════════ */}
+          {/* ══ BROWSE TAB ══ */}
           {activeView === 'browse' && (
             <div>
               {Object.entries(DEPT_COURSES).map(([dept, deptInfo]) => {
-                // Employees only see their own dept
                 if (!isAdmin() && dept !== userDept) return null;
                 return (
-                  <div key={dept} style={{marginBottom:32}}>
+                  <div key={dept} style={{marginBottom:36}}>
                     <div style={{
-                      display:'flex', alignItems:'center',
-                      gap:10, marginBottom:16,
+                      display:'flex',alignItems:'center',
+                      gap:10,marginBottom:16,
                     }}>
                       <span style={{fontSize:28}}>{deptInfo.emoji}</span>
                       <h2 style={{
-                        color:'#fff', margin:0, fontSize:18,
-                        textTransform:'capitalize',
+                        color:'#fff',margin:0,fontSize:18,textTransform:'capitalize',
                       }}>
-                        {dept} Department
+                        {deptInfo.label}
                       </h2>
                       <span style={{
-                        padding:'2px 10px', borderRadius:20, fontSize:12,
-                        background:'rgba(99,102,241,0.15)', color:'#a5b4fc',
+                        padding:'2px 10px',borderRadius:20,fontSize:12,
+                        background:'rgba(99,102,241,0.15)',color:'#a5b4fc',
                         border:'1px solid rgba(99,102,241,0.3)',
                       }}>
                         {deptInfo.courses.length} courses
                       </span>
                     </div>
-
                     <div style={{
                       display:'grid',
-                      gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',
-                      gap:12,
+                      gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',
+                      gap:14,
                     }}>
                       {deptInfo.courses.map((c, idx) => {
                         const isEnrolled = enrolledTitles.includes(c.title);
+                        const isPaid     = c.price > 0;
                         return (
                           <div key={idx} style={{
                             background:'rgba(255,255,255,0.03)',
                             border:`1px solid ${isEnrolled
                               ? 'rgba(16,185,129,0.3)'
+                              : isPaid
+                              ? 'rgba(245,158,11,0.2)'
                               : 'rgba(255,255,255,0.06)'}`,
-                            borderRadius:12, padding:'16px',
-                            position:'relative',
+                            borderRadius:14,padding:'18px',
+                            position:'relative',overflow:'hidden',
                           }}>
-                            <div style={{
-                              fontSize:32, marginBottom:10,
-                              textAlign:'center',
-                            }}>
+                            {/* Paid badge */}
+                            {isPaid && (
+                              <div style={{
+                                position:'absolute',top:10,right:10,
+                                padding:'2px 8px',borderRadius:20,fontSize:11,
+                                background:'rgba(245,158,11,0.2)',
+                                color:'#fbbf24',
+                                border:'1px solid rgba(245,158,11,0.3)',
+                                fontWeight:700,
+                              }}>
+                                💳 ₹{c.price}
+                              </div>
+                            )}
+                            {!isPaid && (
+                              <div style={{
+                                position:'absolute',top:10,right:10,
+                                padding:'2px 8px',borderRadius:20,fontSize:11,
+                                background:'rgba(16,185,129,0.15)',
+                                color:'#34d399',
+                                border:'1px solid rgba(16,185,129,0.2)',
+                                fontWeight:700,
+                              }}>
+                                FREE
+                              </div>
+                            )}
+
+                            <div style={{fontSize:36,textAlign:'center',marginBottom:10}}>
                               {c.icon}
                             </div>
                             <div style={{
-                              color:'#fff', fontWeight:600,
-                              fontSize:14, marginBottom:8,
-                              textAlign:'center',
+                              color:'#fff',fontWeight:600,fontSize:14,
+                              textAlign:'center',marginBottom:8,
                             }}>
                               {c.title}
                             </div>
-                            <div style={{
-                              display:'flex', justifyContent:'center',
-                              gap:6, marginBottom:10, flexWrap:'wrap',
+                            <p style={{
+                              color:'#64748b',fontSize:12,textAlign:'center',
+                              marginBottom:12,lineHeight:1.5,
                             }}>
-                              {diffBadge(c.difficulty)}
+                              {c.description}
+                            </p>
+                            <div style={{
+                              display:'flex',justifyContent:'center',
+                              gap:6,marginBottom:14,flexWrap:'wrap',
+                            }}>
+                              <DiffBadge d={c.difficulty}/>
                               <span style={{
-                                padding:'2px 8px', borderRadius:20,
-                                fontSize:11, color:'#64748b',
-                                background:'rgba(255,255,255,0.04)',
+                                padding:'2px 8px',borderRadius:20,fontSize:11,
+                                color:'#64748b',background:'rgba(255,255,255,0.04)',
                                 border:'1px solid rgba(255,255,255,0.06)',
                               }}>
                                 ⏱️ {c.duration}hrs
                               </span>
+                              <span style={{
+                                padding:'2px 8px',borderRadius:20,fontSize:11,
+                                color:'#94a3b8',background:'rgba(255,255,255,0.04)',
+                                border:'1px solid rgba(255,255,255,0.06)',
+                              }}>
+                                🎬 {c.videos?.length||0} videos
+                              </span>
                             </div>
+
                             {isEnrolled ? (
                               <div style={{
                                 textAlign:'center',fontSize:12,
@@ -643,17 +849,31 @@ export default function Courses() {
                             ) : isAdmin() ? (
                               <button
                                 onClick={() => {
-                                  setCreateForm({ dept, courseIdx: idx });
-                                  setShowCreate(true);
+                                  setAssignForm({ dept, courseIdx: idx });
+                                  setShowAssign(true);
                                 }}
                                 style={{
-                                  width:'100%', padding:'8px',
-                                  borderRadius:8, border:'none',
-                                  background:'rgba(99,102,241,0.2)',
-                                  color:'#a5b4fc', cursor:'pointer',
-                                  fontSize:13, fontWeight:600,
+                                  width:'100%',padding:'8px',borderRadius:8,
+                                  border:'none',
+                                  background: isPaid
+                                    ? 'rgba(245,158,11,0.2)'
+                                    : 'rgba(99,102,241,0.2)',
+                                  color: isPaid ? '#fbbf24' : '#a5b4fc',
+                                  cursor:'pointer',fontSize:13,fontWeight:600,
                                 }}>
-                                ➕ Assign
+                                ➕ {isPaid ? 'Assign (Paid)' : 'Assign Free'}
+                              </button>
+                            ) : isPaid ? (
+                              <button
+                                onClick={() => handleRequestPaidCourse(c, dept)}
+                                style={{
+                                  width:'100%',padding:'8px',borderRadius:8,
+                                  border:'1px solid rgba(245,158,11,0.3)',
+                                  background:'rgba(245,158,11,0.1)',
+                                  color:'#fbbf24',cursor:'pointer',
+                                  fontSize:13,fontWeight:600,
+                                }}>
+                                💳 Request Access (₹{c.price})
                               </button>
                             ) : (
                               <div style={{
@@ -672,80 +892,236 @@ export default function Courses() {
             </div>
           )}
 
+          {/* ══ CODING PRACTICE TAB ══ */}
+          {activeView === 'coding' && (
+            <div>
+              <div style={{marginBottom:28}}>
+                <h2 style={{color:'#fff',fontSize:20,marginBottom:6}}>
+                  💻 Coding Practice Platforms
+                </h2>
+                <p style={{color:'#64748b',fontSize:14}}>
+                  Sharpen your skills with these top platforms
+                </p>
+              </div>
+
+              <div style={{
+                display:'grid',
+                gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',
+                gap:16,marginBottom:40,
+              }}>
+                {CODING_PLATFORMS.map((p,i) => (
+                  <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
+                    style={{
+                      textDecoration:'none',
+                      display:'block',
+                      background:'rgba(255,255,255,0.04)',
+                      border:'1px solid rgba(255,255,255,0.08)',
+                      borderRadius:16,padding:'24px',
+                      transition:'all 0.2s',
+                      cursor:'pointer',
+                    }}>
+                    <div style={{
+                      fontSize:40,marginBottom:12,textAlign:'center',
+                    }}>
+                      {p.icon}
+                    </div>
+                    <div style={{
+                      color:'#fff',fontWeight:700,fontSize:16,
+                      textAlign:'center',marginBottom:6,
+                    }}>
+                      {p.name}
+                    </div>
+                    <div style={{
+                      color:'#64748b',fontSize:12,
+                      textAlign:'center',marginBottom:14,
+                    }}>
+                      {p.desc}
+                    </div>
+                    <div style={{
+                      display:'flex',justifyContent:'center',
+                    }}>
+                      <span style={{
+                        padding:'6px 16px',borderRadius:20,fontSize:12,
+                        fontWeight:600,color:'#fff',
+                        background:`${p.color}33`,
+                        border:`1px solid ${p.color}55`,
+                      }}>
+                        Practice Now →
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              {/* Dept-specific coding links */}
+              {(() => {
+                const deptCourse = isAdmin() ? null : DEPT_COURSES[userDept];
+                if (!deptCourse) return null;
+                const coursesWithCoding = deptCourse.courses.filter(c => c.coding);
+                if (!coursesWithCoding.length) return null;
+                return (
+                  <div>
+                    <h3 style={{color:'#e2e8f0',marginBottom:16,fontSize:16}}>
+                      🎯 Recommended for {userDept.charAt(0).toUpperCase()+userDept.slice(1)} Team
+                    </h3>
+                    <div style={{
+                      display:'grid',
+                      gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',
+                      gap:12,
+                    }}>
+                      {coursesWithCoding.map((c,i) => (
+                        <a key={i} href={c.coding.url}
+                          target="_blank" rel="noopener noreferrer"
+                          style={{
+                            textDecoration:'none',
+                            display:'flex',alignItems:'center',gap:12,
+                            padding:'14px 16px',borderRadius:12,
+                            background:'rgba(99,102,241,0.08)',
+                            border:'1px solid rgba(99,102,241,0.2)',
+                          }}>
+                          <span style={{fontSize:24}}>{c.icon}</span>
+                          <div>
+                            <div style={{color:'#e2e8f0',fontWeight:600,fontSize:13}}>
+                              {c.coding.label}
+                            </div>
+                            <div style={{color:'#64748b',fontSize:11}}>
+                              via {c.coding.platform}
+                            </div>
+                          </div>
+                          <span style={{marginLeft:'auto',color:'#a5b4fc',fontSize:16}}>
+                            →
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          COURSE DETAIL MODAL
+          COURSE DETAIL MODAL WITH YOUTUBE VIDEOS
       ══════════════════════════════════════════════════════ */}
       {selectedCourse && !quizMode && !quizResult && (
         <div style={{
           position:'fixed',inset:0,zIndex:9999,
-          background:'rgba(0,0,0,0.85)',
+          background:'rgba(0,0,0,0.9)',
           display:'flex',alignItems:'center',justifyContent:'center',
-          padding:20,
-        }} onClick={() => setSelectedCourse(null)}>
+          padding:16,
+        }} onClick={() => { setSelectedCourse(null); setActiveVideo(0); }}>
           <div style={{
             background:'#0f172a',
             border:'1px solid rgba(255,255,255,0.08)',
-            borderRadius:20,width:'100%',maxWidth:700,
-            maxHeight:'90vh',overflow:'hidden',
+            borderRadius:20,width:'100%',maxWidth:800,
+            maxHeight:'92vh',overflow:'hidden',
             display:'flex',flexDirection:'column',
           }} onClick={e=>e.stopPropagation()}>
 
             {/* Header */}
             <div style={{
-              padding:'24px', borderBottom:'1px solid rgba(255,255,255,0.06)',
-              display:'flex',alignItems:'center',gap:16,
+              padding:'20px 24px',
+              borderBottom:'1px solid rgba(255,255,255,0.06)',
+              display:'flex',alignItems:'center',gap:14,flexShrink:0,
             }}>
               <div style={{
-                fontSize:44, width:64, height:64,
-                background:'rgba(99,102,241,0.15)',
-                borderRadius:14,
+                fontSize:40,width:56,height:56,
+                background:'rgba(99,102,241,0.15)',borderRadius:12,
                 display:'flex',alignItems:'center',justifyContent:'center',
               }}>
                 {selectedCourse.enrollment.course_thumbnail}
               </div>
               <div style={{flex:1}}>
-                <h2 style={{color:'#fff',margin:'0 0 6px',fontSize:20}}>
+                <h2 style={{color:'#fff',margin:'0 0 4px',fontSize:18}}>
                   {selectedCourse.enrollment.course_title}
                 </h2>
-                <p style={{color:'#64748b',margin:'0 0 8px',fontSize:13}}>
-                  {selectedCourse.enrollment.course_description}
-                </p>
-                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                  {diffBadge(selectedCourse.enrollment.course_difficulty)}
-                  <span style={{
-                    padding:'2px 8px',borderRadius:20,fontSize:11,
-                    color:'#64748b',background:'rgba(255,255,255,0.04)',
-                    border:'1px solid rgba(255,255,255,0.06)',
-                  }}>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                  <DiffBadge d={selectedCourse.enrollment.course_difficulty}/>
+                  <span style={{color:'#64748b',fontSize:12}}>
                     ⏱️ {selectedCourse.enrollment.course_duration}hrs
                   </span>
                   <span style={{
-                    padding:'2px 8px',borderRadius:20,fontSize:11,
-                    color:'#a5b4fc',background:'rgba(99,102,241,0.1)',
+                    color:'#a5b4fc',fontSize:12,
+                    background:'rgba(99,102,241,0.1)',
+                    padding:'2px 8px',borderRadius:20,
                     border:'1px solid rgba(99,102,241,0.2)',
                   }}>
-                    {selectedCourse.enrollment.progress}% complete
+                    {selectedCourse.enrollment.progress}% done
                   </span>
                 </div>
               </div>
-              <button onClick={() => setSelectedCourse(null)} style={{
-                background:'rgba(255,255,255,0.06)',border:'none',
-                borderRadius:8,color:'#94a3b8',width:32,height:32,
-                cursor:'pointer',fontSize:18,flexShrink:0,
-              }}>×</button>
+              <button onClick={() => { setSelectedCourse(null); setActiveVideo(0); }}
+                style={{
+                  background:'rgba(255,255,255,0.06)',border:'none',
+                  borderRadius:8,color:'#94a3b8',width:32,height:32,
+                  cursor:'pointer',fontSize:18,flexShrink:0,
+                }}>×</button>
             </div>
 
-            {/* Body */}
-            <div style={{overflowY:'auto',padding:'24px',flex:1}}>
+            <div style={{overflowY:'auto',flex:1,padding:'20px 24px'}}>
+
+              {/* ── YouTube Video Section ── */}
+              {selectedCourse.template?.videos?.length > 0 && (
+                <div style={{marginBottom:24}}>
+                  <h3 style={{color:'#e2e8f0',marginBottom:12,fontSize:15}}>
+                    🎬 Course Videos
+                  </h3>
+
+                  {/* Video tabs */}
+                  <div style={{
+                    display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',
+                  }}>
+                    {selectedCourse.template.videos.map((v,i) => (
+                      <button key={i}
+                        onClick={() => setActiveVideo(i)}
+                        style={{
+                          padding:'6px 14px',borderRadius:20,border:'none',
+                          background: activeVideo===i
+                            ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
+                          color: activeVideo===i ? '#a5b4fc' : '#64748b',
+                          cursor:'pointer',fontSize:12,fontWeight:600,
+                          border:`1px solid ${activeVideo===i
+                            ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                        }}>
+                        {i+1}. {v.title}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Video player */}
+                  <div style={{
+                    borderRadius:14,overflow:'hidden',
+                    border:'1px solid rgba(255,255,255,0.1)',
+                    background:'#000',
+                  }}>
+                    <iframe
+                      width="100%"
+                      height="380"
+                      src={selectedCourse.template.videos[activeVideo]?.url}
+                      title={selectedCourse.template.videos[activeVideo]?.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{display:'block'}}
+                    />
+                  </div>
+                  <p style={{
+                    color:'#64748b',fontSize:12,marginTop:8,textAlign:'center',
+                  }}>
+                    📺 {selectedCourse.template.videos[activeVideo]?.title} •
+                    ⏱️ {selectedCourse.template.videos[activeVideo]?.duration}
+                  </p>
+                </div>
+              )}
 
               {/* Progress bar */}
-              <div style={{marginBottom:24}}>
+              <div style={{marginBottom:20}}>
                 <div style={{
                   display:'flex',justifyContent:'space-between',
-                  marginBottom:8,color:'#94a3b8',fontSize:13,
+                  marginBottom:6,color:'#94a3b8',fontSize:12,
                 }}>
                   <span>Overall Progress</span>
                   <span style={{color:'#a5b4fc',fontWeight:600}}>
@@ -771,37 +1147,27 @@ export default function Courses() {
               </h3>
               <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:24}}>
                 {(selectedCourse.enrollment.course_lessons||[]).map((lesson,idx) => {
-                  const done = (selectedCourse.enrollment.lessons_done||[])
-                    .includes(idx);
+                  const done   = (selectedCourse.enrollment.lessons_done||[]).includes(idx);
                   const locked = idx > 0 &&
-                    !(selectedCourse.enrollment.lessons_done||[]).includes(idx-1) &&
-                    !done;
+                    !(selectedCourse.enrollment.lessons_done||[]).includes(idx-1) && !done;
                   return (
                     <div key={idx} style={{
                       display:'flex',alignItems:'center',gap:12,
                       padding:'12px 16px',borderRadius:10,
-                      background: done
-                        ? 'rgba(16,185,129,0.08)'
-                        : 'rgba(255,255,255,0.03)',
-                      border:`1px solid ${done
-                        ? 'rgba(16,185,129,0.25)'
-                        : 'rgba(255,255,255,0.06)'}`,
-                      opacity: locked ? 0.4 : 1,
+                      background: done ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)',
+                      border:`1px solid ${done ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                      opacity: locked ? 0.45 : 1,
                     }}>
                       <div style={{
-                        width:32,height:32,borderRadius:8,
-                        background: done
-                          ? 'rgba(16,185,129,0.2)'
-                          : 'rgba(255,255,255,0.05)',
-                        display:'flex',alignItems:'center',
-                        justifyContent:'center',
-                        fontSize:14,flexShrink:0,
+                        width:32,height:32,borderRadius:8,flexShrink:0,
+                        background: done ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)',
+                        display:'flex',alignItems:'center',justifyContent:'center',
+                        fontSize:14,
                       }}>
                         {done ? '✅' : locked ? '🔒' : idx+1}
                       </div>
                       <span style={{
-                        color: done ? '#34d399' : '#e2e8f0',
-                        flex:1, fontSize:14,
+                        color: done ? '#34d399' : '#e2e8f0',flex:1,fontSize:14,
                       }}>
                         {lesson}
                       </span>
@@ -821,33 +1187,62 @@ export default function Courses() {
                         </button>
                       )}
                       {done && (
-                        <span style={{color:'#34d399',fontSize:12}}>
-                          Done ✓
-                        </span>
+                        <span style={{color:'#34d399',fontSize:12}}>Done ✓</span>
                       )}
                     </div>
                   );
                 })}
               </div>
 
-              {/* Quiz button — show when all lessons done */}
-              {selectedCourse.enrollment.progress >= 100 &&
-               !selectedCourse.enrollment.quiz_passed && (
+              {/* Coding Practice link */}
+              {selectedCourse.template?.coding && (
                 <div style={{
-                  padding:'20px',borderRadius:14,textAlign:'center',
+                  marginBottom:20,padding:'16px',borderRadius:12,
                   background:'rgba(99,102,241,0.08)',
                   border:'1px solid rgba(99,102,241,0.2)',
                 }}>
-                  <div style={{fontSize:40,marginBottom:8}}>🎯</div>
+                  <h3 style={{color:'#a5b4fc',margin:'0 0 8px',fontSize:14}}>
+                    💻 Practice This Course
+                  </h3>
+                  <p style={{color:'#64748b',fontSize:12,margin:'0 0 12px'}}>
+                    Apply what you learn with hands-on challenges!
+                  </p>
+                  <a href={selectedCourse.template.coding.url}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{
+                      display:'inline-flex',alignItems:'center',gap:8,
+                      padding:'8px 18px',borderRadius:10,
+                      background:'rgba(99,102,241,0.2)',
+                      border:'1px solid rgba(99,102,241,0.4)',
+                      color:'#a5b4fc',textDecoration:'none',
+                      fontSize:13,fontWeight:600,
+                    }}>
+                    🚀 {selectedCourse.template.coding.label}
+                    <span style={{color:'#64748b'}}>
+                      via {selectedCourse.template.coding.platform}
+                    </span>
+                  </a>
+                </div>
+              )}
+
+              {/* Quiz section */}
+              {selectedCourse.enrollment.progress >= 100 &&
+               !selectedCourse.enrollment.quiz_passed && (
+                <div style={{
+                  padding:'24px',borderRadius:14,textAlign:'center',
+                  background:'rgba(99,102,241,0.08)',
+                  border:'1px solid rgba(99,102,241,0.2)',
+                }}>
+                  <div style={{fontSize:48,marginBottom:8}}>🎯</div>
                   <h3 style={{color:'#e2e8f0',margin:'0 0 6px'}}>
                     Ready for the Quiz?
                   </h3>
                   <p style={{color:'#64748b',fontSize:13,margin:'0 0 16px'}}>
-                    Pass with {selectedCourse.enrollment.course_pass_score}% to earn
-                    your certificate!
+                    Answer 5 questions — pass with{' '}
+                    {selectedCourse.enrollment.course_pass_score}% to get certified!
                   </p>
                   <button
-                    onClick={() => setQuizMode(true)}
+                    onClick={() => { setQuizMode(true); setQuizAnswers({}); }}
                     style={{
                       padding:'12px 28px',borderRadius:10,
                       background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
@@ -868,54 +1263,51 @@ export default function Courses() {
                   border:'2px solid rgba(245,158,11,0.3)',
                 }}>
                   <div style={{fontSize:60,marginBottom:8}}>🏆</div>
-                  <h3 style={{
-                    color:'#fbbf24',margin:'0 0 6px',fontSize:18,
-                  }}>
+                  <h3 style={{color:'#fbbf24',margin:'0 0 4px',fontSize:18}}>
                     Certificate Earned!
                   </h3>
-                  <p style={{
-                    color:'#94a3b8',fontSize:13,margin:'0 0 4px',
-                  }}>
+                  <p style={{color:'#94a3b8',fontSize:13,margin:'0 0 4px'}}>
                     {selectedCourse.enrollment.course_title}
                   </p>
-                  <p style={{
-                    color:'#64748b',fontSize:12,margin:'0 0 16px',
-                  }}>
+                  <p style={{color:'#64748b',fontSize:12,margin:'0 0 16px'}}>
                     ID: {selectedCourse.enrollment.certificate_id}
                   </p>
-                  <button
-                    onClick={() => {
-                      // Generate certificate
-                      const cert = `
-EMS Pro — Certificate of Completion
-
-This is to certify that
-
-${selectedCourse.enrollment.user_name || 'Employee'}
-
-has successfully completed the course
-
-"${selectedCourse.enrollment.course_title}"
-
-Department: ${(selectedCourse.enrollment.course_dept||'').toUpperCase()}
-Score: ${selectedCourse.enrollment.quiz_score}%
-Certificate ID: ${selectedCourse.enrollment.certificate_id}
-Date: ${new Date(selectedCourse.enrollment.completed_at||Date.now()).toLocaleDateString()}
-
-Issued by EMS Pro Learning Center
-                      `.trim();
-                      const blob = new Blob([cert], {type:'text/plain'});
-                      const a = document.createElement('a');
-                      a.href = URL.createObjectURL(blob);
-                      a.download = `Certificate_${selectedCourse.enrollment.certificate_id}.txt`;
-                      a.click();
-                    }}
-                    style={{
-                      padding:'12px 28px',borderRadius:10,
-                      background:'linear-gradient(135deg,#f59e0b,#d97706)',
-                      border:'none',color:'#fff',cursor:'pointer',
-                      fontSize:14,fontWeight:700,
-                    }}>
+                  <button onClick={() => {
+                    const cert = [
+                      '═══════════════════════════════════════════════════════',
+                      '          EMS PRO — CERTIFICATE OF COMPLETION           ',
+                      '═══════════════════════════════════════════════════════',
+                      '',
+                      '  This is to certify that',
+                      '',
+                      `      ${selectedCourse.enrollment.user_name || 'Employee'}`,
+                      '',
+                      '  has successfully completed the course:',
+                      '',
+                      `      "${selectedCourse.enrollment.course_title}"`,
+                      '',
+                      `  Department : ${(selectedCourse.enrollment.course_dept||'').toUpperCase()}`,
+                      `  Difficulty : ${selectedCourse.enrollment.course_difficulty}`,
+                      `  Duration   : ${selectedCourse.enrollment.course_duration} hours`,
+                      `  Quiz Score : ${selectedCourse.enrollment.quiz_score}%`,
+                      `  Cert ID    : ${selectedCourse.enrollment.certificate_id}`,
+                      `  Date       : ${new Date(selectedCourse.enrollment.completed_at||Date.now()).toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'})}`,
+                      '',
+                      '═══════════════════════════════════════════════════════',
+                      '         Issued by EMS Pro Learning Center              ',
+                      '═══════════════════════════════════════════════════════',
+                    ].join('\n');
+                    const blob = new Blob([cert], {type:'text/plain'});
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `Certificate_${selectedCourse.enrollment.certificate_id}.txt`;
+                    a.click();
+                  }} style={{
+                    padding:'12px 28px',borderRadius:10,
+                    background:'linear-gradient(135deg,#f59e0b,#d97706)',
+                    border:'none',color:'#fff',cursor:'pointer',
+                    fontSize:14,fontWeight:700,
+                  }}>
                     📥 Download Certificate
                   </button>
                 </div>
@@ -926,43 +1318,51 @@ Issued by EMS Pro Learning Center
       )}
 
       {/* ══════════════════════════════════════════════════════
-          QUIZ MODAL
+          QUIZ MODAL — FIXED
       ══════════════════════════════════════════════════════ */}
       {selectedCourse && quizMode && !quizResult && (
         <div style={{
           position:'fixed',inset:0,zIndex:9999,
-          background:'rgba(0,0,0,0.9)',
+          background:'rgba(0,0,0,0.92)',
           display:'flex',alignItems:'center',justifyContent:'center',
-          padding:20,
+          padding:16,
         }}>
           <div style={{
             background:'#0f172a',
             border:'1px solid rgba(255,255,255,0.08)',
-            borderRadius:20,width:'100%',maxWidth:600,
-            maxHeight:'90vh',overflow:'hidden',
+            borderRadius:20,width:'100%',maxWidth:620,
+            maxHeight:'92vh',overflow:'hidden',
             display:'flex',flexDirection:'column',
           }}>
             {/* Quiz header */}
             <div style={{
               padding:'20px 24px',
               borderBottom:'1px solid rgba(255,255,255,0.06)',
-              display:'flex',justifyContent:'space-between',alignItems:'center',
+              display:'flex',justifyContent:'space-between',
+              alignItems:'center',flexShrink:0,
             }}>
               <div>
                 <h2 style={{color:'#fff',margin:'0 0 4px',fontSize:18}}>
-                  🎯 Quiz: {selectedCourse.enrollment.course_title}
+                  🎯 {selectedCourse.enrollment.course_title} — Quiz
                 </h2>
                 <p style={{color:'#64748b',margin:0,fontSize:13}}>
-                  Answer all questions — pass with {selectedCourse.enrollment.course_pass_score}%
+                  Pass with {selectedCourse.enrollment.course_pass_score}% to earn certificate
                 </p>
               </div>
               <span style={{
-                color:'#a5b4fc',fontSize:13,
-                background:'rgba(99,102,241,0.1)',
-                padding:'4px 12px',borderRadius:20,
-                border:'1px solid rgba(99,102,241,0.2)',
+                padding:'4px 12px',borderRadius:20,fontSize:13,
+                background: Object.keys(quizAnswers).length ===
+                  (selectedCourse.enrollment.course_quiz||[]).length
+                  ? 'rgba(16,185,129,0.15)' : 'rgba(99,102,241,0.1)',
+                color: Object.keys(quizAnswers).length ===
+                  (selectedCourse.enrollment.course_quiz||[]).length
+                  ? '#34d399' : '#a5b4fc',
+                border:`1px solid ${Object.keys(quizAnswers).length ===
+                  (selectedCourse.enrollment.course_quiz||[]).length
+                  ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.2)'}`,
+                fontWeight:600,
               }}>
-                {Object.keys(quizAnswers).length} /
+                {Object.keys(quizAnswers).length}/
                 {(selectedCourse.enrollment.course_quiz||[]).length} answered
               </span>
             </div>
@@ -970,34 +1370,50 @@ Issued by EMS Pro Learning Center
             <div style={{overflowY:'auto',padding:'24px',flex:1}}>
               {(selectedCourse.enrollment.course_quiz||[]).map((q,qi) => (
                 <div key={qi} style={{marginBottom:28}}>
-                  <p style={{
-                    color:'#e2e8f0',fontWeight:600,
-                    fontSize:15,marginBottom:14,
+                  <div style={{
+                    display:'flex',alignItems:'center',gap:10,marginBottom:14,
                   }}>
-                    Q{qi+1}. {q.question}
-                  </p>
-                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    <span style={{
+                      width:28,height:28,borderRadius:8,flexShrink:0,
+                      background: quizAnswers[String(qi)] !== undefined
+                        ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.2)',
+                      border:`1px solid ${quizAnswers[String(qi)] !== undefined
+                        ? 'rgba(16,185,129,0.4)' : 'rgba(99,102,241,0.3)'}`,
+                      display:'flex',alignItems:'center',
+                      justifyContent:'center',fontSize:13,fontWeight:700,
+                      color: quizAnswers[String(qi)] !== undefined
+                        ? '#34d399' : '#a5b4fc',
+                    }}>
+                      {quizAnswers[String(qi)] !== undefined ? '✓' : qi+1}
+                    </span>
+                    <p style={{
+                      color:'#e2e8f0',fontWeight:600,fontSize:15,margin:0,
+                    }}>
+                      {q.question}
+                    </p>
+                  </div>
+                  <div style={{
+                    display:'flex',flexDirection:'column',gap:8,paddingLeft:38,
+                  }}>
                     {(q.options||[]).map((opt,oi) => (
                       <label key={oi} style={{
                         display:'flex',alignItems:'center',gap:12,
                         padding:'12px 16px',borderRadius:10,cursor:'pointer',
                         background: quizAnswers[String(qi)] === String(oi)
-                          ? 'rgba(99,102,241,0.15)'
-                          : 'rgba(255,255,255,0.03)',
+                          ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
                         border:`1px solid ${quizAnswers[String(qi)] === String(oi)
-                          ? 'rgba(99,102,241,0.5)'
-                          : 'rgba(255,255,255,0.06)'}`,
+                          ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'}`,
                         transition:'all 0.15s',
                       }}>
                         <input
                           type="radio"
-                          name={`q${qi}`}
+                          name={`quiz-q${qi}`}
                           value={String(oi)}
                           checked={quizAnswers[String(qi)] === String(oi)}
                           onChange={() => setQuizAnswers(prev => ({
                             ...prev, [String(qi)]: String(oi),
                           }))}
-                          style={{accentColor:'#6366f1'}}
+                          style={{accentColor:'#6366f1',width:16,height:16}}
                         />
                         <span style={{
                           color: quizAnswers[String(qi)] === String(oi)
@@ -1012,22 +1428,29 @@ Issued by EMS Pro Learning Center
                 </div>
               ))}
 
+              {/* Error */}
+              {errorMsg && (
+                <div style={{
+                  padding:'12px',borderRadius:10,marginBottom:16,
+                  background:'rgba(239,68,68,0.1)',
+                  border:'1px solid rgba(239,68,68,0.3)',
+                  color:'#f87171',fontSize:13,textAlign:'center',
+                }}>
+                  {errorMsg}
+                </div>
+              )}
+
               <button
                 onClick={handleQuizSubmit}
-                disabled={
-                  saving ||
-                  Object.keys(quizAnswers).length 
-                  (selectedCourse.enrollment.course_quiz||[]).length
-                }
+                disabled={saving}
                 style={{
                   width:'100%',padding:'14px',borderRadius:12,
                   background: Object.keys(quizAnswers).length ===
                     (selectedCourse.enrollment.course_quiz||[]).length
                     ? 'linear-gradient(135deg,#6366f1,#8b5cf6)'
                     : 'rgba(255,255,255,0.06)',
-                  border:'none',color:'#fff',cursor:'pointer',
-                  fontSize:15,fontWeight:700,
-                  opacity: saving ? 0.7 : 1,
+                  border:'none',color:'#fff',cursor: saving ? 'not-allowed' : 'pointer',
+                  fontSize:15,fontWeight:700,opacity:saving?0.7:1,
                 }}>
                 {saving ? '⏳ Submitting...' : '🚀 Submit Quiz'}
               </button>
@@ -1042,61 +1465,62 @@ Issued by EMS Pro Learning Center
       {quizResult && (
         <div style={{
           position:'fixed',inset:0,zIndex:9999,
-          background:'rgba(0,0,0,0.9)',
-          display:'flex',alignItems:'center',justifyContent:'center',
-          padding:20,
+          background:'rgba(0,0,0,0.92)',
+          display:'flex',alignItems:'center',justifyContent:'center',padding:16,
         }}>
           <div style={{
             background:'#0f172a',
             border:`2px solid ${quizResult.passed
               ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
-            borderRadius:20,width:'100%',maxWidth:480,
-            padding:'40px',textAlign:'center',
+            borderRadius:20,width:'100%',maxWidth:480,padding:'40px',
+            textAlign:'center',
           }}>
-            <div style={{fontSize:80,marginBottom:16}}>
+            <div style={{fontSize:80,marginBottom:12}}>
               {quizResult.passed ? '🏆' : '😔'}
             </div>
             <h2 style={{
               color: quizResult.passed ? '#34d399' : '#f87171',
               fontSize:24,margin:'0 0 8px',
             }}>
-              {quizResult.passed ? 'Congratulations!' : 'Not Quite There'}
+              {quizResult.passed ? 'Congratulations! You Passed!' : 'Better Luck Next Time'}
             </h2>
             <p style={{color:'#94a3b8',fontSize:14,margin:'0 0 24px'}}>
               {quizResult.passed
-                ? 'You passed! Your certificate has been generated.'
-                : 'Keep learning and try again. You can do it!'}
+                ? '🎉 Your certificate has been generated!'
+                : '📚 Review the course material and try again.'}
             </p>
 
-            {/* Score circle */}
+            {/* Score */}
             <div style={{
-              width:120,height:120,borderRadius:'50%',
+              width:130,height:130,borderRadius:'50%',
               background: quizResult.passed
-                ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
               border:`4px solid ${quizResult.passed ? '#10b981' : '#ef4444'}`,
               display:'flex',flexDirection:'column',
               alignItems:'center',justifyContent:'center',
               margin:'0 auto 24px',
             }}>
               <span style={{
-                fontSize:36,fontWeight:900,
+                fontSize:38,fontWeight:900,
                 color: quizResult.passed ? '#34d399' : '#f87171',
+                lineHeight:1,
               }}>
                 {quizResult.score}%
               </span>
-              <span style={{color:'#64748b',fontSize:11}}>
+              <span style={{color:'#64748b',fontSize:12,marginTop:4}}>
                 {quizResult.correct}/{quizResult.total} correct
               </span>
             </div>
 
             <div style={{
-              padding:'12px',borderRadius:10,marginBottom:20,
+              padding:'12px',borderRadius:10,marginBottom:16,
               background:'rgba(255,255,255,0.04)',
               border:'1px solid rgba(255,255,255,0.08)',
               color:'#64748b',fontSize:13,
             }}>
-              Pass score: {quizResult.pass_score}% •
-              Your score: {quizResult.score}%
+              Required: {quizResult.pass_score}% •
+              Your score: {quizResult.score}% •
+              {quizResult.passed ? ' ✅ Passed!' : ' ❌ Failed'}
             </div>
 
             {quizResult.passed && quizResult.certificate_id && (
@@ -1115,11 +1539,12 @@ Issued by EMS Pro Learning Center
                 setQuizResult(null);
                 setQuizMode(false);
                 setQuizAnswers({});
-                if (!quizResult.passed) {
-                  setSelectedCourse(null);
-                } else {
-                  // Refresh enrollment
+                if (quizResult.passed) {
                   fetchData();
+                  setSelectedCourse(prev => ({
+                    ...prev,
+                    enrollment: quizResult.enrollment,
+                  }));
                 }
               }}
               style={{
@@ -1130,27 +1555,27 @@ Issued by EMS Pro Learning Center
                 border:'none',color:'#fff',cursor:'pointer',
                 fontSize:15,fontWeight:700,
               }}>
-              {quizResult.passed ? '🎉 View Certificate' : '📚 Back to Course'}
+              {quizResult.passed
+                ? '🎉 View My Certificate'
+                : '📚 Back to Course & Retry'}
             </button>
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════
-          ADMIN: ASSIGN COURSE MODAL
+          ASSIGN COURSE MODAL (Admin)
       ══════════════════════════════════════════════════════ */}
-      {showCreate && isAdmin() && (
+      {showAssign && isAdmin() && (
         <div style={{
           position:'fixed',inset:0,zIndex:9999,
           background:'rgba(0,0,0,0.8)',
-          display:'flex',alignItems:'center',justifyContent:'center',
-          padding:20,
-        }} onClick={() => setShowCreate(false)}>
+          display:'flex',alignItems:'center',justifyContent:'center',padding:20,
+        }} onClick={() => setShowAssign(false)}>
           <div style={{
             background:'#0f172a',
             border:'1px solid rgba(255,255,255,0.08)',
-            borderRadius:20,width:'100%',maxWidth:500,
-            padding:'28px',
+            borderRadius:20,width:'100%',maxWidth:520,padding:'28px',
           }} onClick={e=>e.stopPropagation()}>
 
             <div style={{
@@ -1158,16 +1583,16 @@ Issued by EMS Pro Learning Center
               alignItems:'center',marginBottom:24,
             }}>
               <h2 style={{color:'#fff',margin:0,fontSize:18}}>
-                ➕ Assign Course
+                ➕ Assign Course to Department
               </h2>
-              <button onClick={() => setShowCreate(false)} style={{
+              <button onClick={() => setShowAssign(false)} style={{
                 background:'rgba(255,255,255,0.06)',border:'none',
                 borderRadius:8,color:'#94a3b8',width:32,height:32,
                 cursor:'pointer',fontSize:18,
               }}>×</button>
             </div>
 
-            {/* Department select */}
+            {/* Dept select */}
             <div style={{marginBottom:16}}>
               <label style={{
                 color:'#94a3b8',fontSize:12,fontWeight:600,
@@ -1176,20 +1601,17 @@ Issued by EMS Pro Learning Center
               }}>
                 Department
               </label>
-              <select
-                value={createForm.dept}
-                onChange={e => setCreateForm(p => ({
-                  ...p, dept:e.target.value, courseIdx:0,
-                }))}
+              <select value={assignForm.dept}
+                onChange={e => setAssignForm(p=>({...p,dept:e.target.value,courseIdx:0}))}
                 style={{
                   width:'100%',padding:'10px 14px',borderRadius:10,
                   background:'rgba(255,255,255,0.05)',
                   border:'1px solid rgba(255,255,255,0.1)',
-                  color:'#e2e8f0',fontSize:14,cursor:'pointer',
+                  color:'#e2e8f0',fontSize:14,
                 }}>
-                {Object.keys(DEPT_COURSES).map(d => (
+                {Object.entries(DEPT_COURSES).map(([d,info]) => (
                   <option key={d} value={d} style={{background:'#1e293b'}}>
-                    {DEPT_COURSES[d].emoji} {d.charAt(0).toUpperCase()+d.slice(1)}
+                    {info.emoji} {info.label}
                   </option>
                 ))}
               </select>
@@ -1204,20 +1626,18 @@ Issued by EMS Pro Learning Center
               }}>
                 Course
               </label>
-              <select
-                value={createForm.courseIdx}
-                onChange={e => setCreateForm(p => ({
-                  ...p, courseIdx:Number(e.target.value),
-                }))}
+              <select value={assignForm.courseIdx}
+                onChange={e => setAssignForm(p=>({...p,courseIdx:Number(e.target.value)}))}
                 style={{
                   width:'100%',padding:'10px 14px',borderRadius:10,
                   background:'rgba(255,255,255,0.05)',
                   border:'1px solid rgba(255,255,255,0.1)',
-                  color:'#e2e8f0',fontSize:14,cursor:'pointer',
+                  color:'#e2e8f0',fontSize:14,
                 }}>
-                {(DEPT_COURSES[createForm.dept]?.courses||[]).map((c,i) => (
+                {(DEPT_COURSES[assignForm.dept]?.courses||[]).map((c,i) => (
                   <option key={i} value={i} style={{background:'#1e293b'}}>
-                    {c.icon} {c.title} ({c.difficulty}, {c.duration}hrs)
+                    {c.icon} {c.title} • {c.difficulty} • {c.duration}hrs
+                    {c.price > 0 ? ` • ₹${c.price}` : ' • FREE'}
                   </option>
                 ))}
               </select>
@@ -1225,47 +1645,86 @@ Issued by EMS Pro Learning Center
 
             {/* Preview */}
             {(() => {
-              const c = DEPT_COURSES[createForm.dept]?.courses[createForm.courseIdx];
+              const c = DEPT_COURSES[assignForm.dept]?.courses[assignForm.courseIdx];
               if (!c) return null;
               return (
                 <div style={{
-                  padding:'14px',borderRadius:10,marginBottom:20,
-                  background:'rgba(99,102,241,0.08)',
-                  border:'1px solid rgba(99,102,241,0.2)',
+                  padding:'16px',borderRadius:12,marginBottom:20,
+                  background: c.price > 0
+                    ? 'rgba(245,158,11,0.08)' : 'rgba(99,102,241,0.08)',
+                  border:`1px solid ${c.price > 0
+                    ? 'rgba(245,158,11,0.2)' : 'rgba(99,102,241,0.2)'}`,
                 }}>
                   <div style={{
-                    display:'flex',alignItems:'center',gap:10,marginBottom:8,
+                    display:'flex',alignItems:'center',gap:12,marginBottom:10,
                   }}>
-                    <span style={{fontSize:28}}>{c.icon}</span>
+                    <span style={{fontSize:32}}>{c.icon}</span>
                     <div>
-                      <div style={{color:'#fff',fontWeight:600}}>{c.title}</div>
-                      <div style={{color:'#64748b',fontSize:12}}>
-                        {diffBadge(c.difficulty)}
-                        <span style={{marginLeft:8}}>⏱️ {c.duration}hrs</span>
+                      <div style={{color:'#fff',fontWeight:600,fontSize:15}}>
+                        {c.title}
+                      </div>
+                      <div style={{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}}>
+                        <DiffBadge d={c.difficulty}/>
+                        <span style={{
+                          color:'#64748b',fontSize:12,
+                          background:'rgba(255,255,255,0.04)',
+                          padding:'2px 8px',borderRadius:20,
+                          border:'1px solid rgba(255,255,255,0.06)',
+                        }}>
+                          ⏱️ {c.duration}hrs
+                        </span>
+                        {c.price > 0 ? (
+                          <span style={{
+                            color:'#fbbf24',fontSize:12,fontWeight:700,
+                            background:'rgba(245,158,11,0.15)',
+                            padding:'2px 8px',borderRadius:20,
+                            border:'1px solid rgba(245,158,11,0.3)',
+                          }}>
+                            💳 Paid • ₹{c.price}
+                          </span>
+                        ) : (
+                          <span style={{
+                            color:'#34d399',fontSize:12,fontWeight:700,
+                            background:'rgba(16,185,129,0.15)',
+                            padding:'2px 8px',borderRadius:20,
+                            border:'1px solid rgba(16,185,129,0.3)',
+                          }}>
+                            ✅ Free
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <p style={{color:'#64748b',fontSize:12,margin:0}}>
-                    This course will be assigned to all{' '}
-                    <strong style={{color:'#a5b4fc'}}>
-                      {createForm.dept}
-                    </strong>{' '}
-                    department employees automatically.
+                  <p style={{color:'#64748b',fontSize:12,margin:'0 0 6px'}}>
+                    {c.description}
                   </p>
+                  <p style={{color:'#94a3b8',fontSize:12,margin:0}}>
+                    📌 Will be assigned to ALL{' '}
+                    <strong style={{color:'#a5b4fc'}}>
+                      {assignForm.dept}
+                    </strong>{' '}
+                    employees automatically.
+                  </p>
+                  {c.price > 0 && (
+                    <p style={{
+                      color:'#fbbf24',fontSize:12,margin:'8px 0 0',
+                      padding:'8px 12px',borderRadius:8,
+                      background:'rgba(245,158,11,0.1)',
+                    }}>
+                      ⚠️ This is a <strong>paid course</strong>.
+                      Assigning it as admin confirms you've approved the cost.
+                    </p>
+                  )}
                 </div>
               );
             })()}
 
-            <button
-              onClick={handleAssignCourse}
-              disabled={saving}
-              style={{
-                width:'100%',padding:'14px',borderRadius:12,
-                background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                border:'none',color:'#fff',cursor:'pointer',
-                fontSize:15,fontWeight:700,
-                opacity:saving?0.7:1,
-              }}>
+            <button onClick={handleAssignCourse} disabled={saving} style={{
+              width:'100%',padding:'14px',borderRadius:12,
+              background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              border:'none',color:'#fff',cursor:saving?'not-allowed':'pointer',
+              fontSize:15,fontWeight:700,opacity:saving?0.7:1,
+            }}>
               {saving ? '⏳ Assigning...' : '🚀 Assign to All Department Employees'}
             </button>
           </div>

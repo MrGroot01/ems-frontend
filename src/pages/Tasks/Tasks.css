@@ -1,60 +1,208 @@
-/* Tasks Page CSS */
+/* Tasks.css — paste into src/pages/Tasks/Tasks.css */
 
+/* ── Board layout ────────────────────────────────────────── */
 .tasks-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
-.task-col {}
-.task-col-head {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 14px; padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.07);
-}
-.task-col-title { font-size: 14px; font-weight: 800; color: #fff; }
-.task-col-count {
-  background: rgba(255,255,255,.08);
-  color: rgba(255,255,255,.5);
-  font-size: 11px; font-weight: 700;
-  padding: 2px 8px; border-radius: 20px;
+/* ── Column ──────────────────────────────────────────────── */
+.task-col {
+  min-height: 300px;
+  max-height: calc(100vh - 320px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.08) transparent;
 }
 
+.task-col::-webkit-scrollbar { width: 3px; }
+.task-col::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.1);
+  border-radius: 4px;
+}
+
+/* ── Task card ───────────────────────────────────────────── */
 .task-card {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 12px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: transform .2s, border-color .2s;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s ease;
+  cursor: default;
 }
-.task-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,.2); }
 
-.task-card-head { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px; }
-.task-card-title { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.4; }
-.task-card-desc  { font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 12px; line-height: 1.5; }
-.task-card-meta  { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px; }
-.task-card-footer{ display:flex;align-items:center;justify-content:space-between; }
-.task-assignee   { display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.4); }
-.task-due        { font-size:11px;color:rgba(255,255,255,.3); }
+.task-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
 
-/* kanban column colors */
-.task-col.todo        .task-col-title { color: rgba(255,255,255,.6); }
-.task-col.in_progress .task-col-title { color: #60a5fa; }
-.task-col.review      .task-col-title { color: #c084fc; }
-.task-col.completed   .task-col-title { color: #34d399; }
+.task-card.overdue {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
 
-/* progress slider */
+.task-card.updating {
+  pointer-events: none;
+}
+
+/* ── Card head ───────────────────────────────────────────── */
+.task-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.task-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #e8eaf2;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.task-card-title:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
+  text-decoration-color: rgba(165,180,252,0.4);
+}
+
+/* ── Card description ────────────────────────────────────── */
+.task-card-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+.task-prog-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.task-prog-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.task-prog-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease, background 0.3s;
+}
+
+.task-prog-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Progress slider ─────────────────────────────────────── */
 .progress-slider {
-  width: 100%; margin-top: 8px;
-  -webkit-appearance: none; appearance: none;
-  height: 6px; border-radius: 6px;
-  background: rgba(255,255,255,.1); outline: none; cursor: pointer;
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  outline: none;
+  margin-bottom: 8px;
+  cursor: pointer;
 }
+
 .progress-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: #6366f1; cursor: pointer;
-  box-shadow: 0 0 6px rgba(99,102,241,.5);
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  border: 2px solid #1a1e2a;
+  transition: transform 0.2s;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+/* ── Card footer ─────────────────────────────────────────── */
+.task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.task-assignee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.task-assignee span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Action buttons ──────────────────────────────────────── */
+.act-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.act-btn.info {
+  background: rgba(79, 142, 247, 0.1);
+  color: #4f8ef7;
+  border: 1px solid rgba(79, 142, 247, 0.2);
+}
+.act-btn.info:hover { background: rgba(79, 142, 247, 0.2); transform: scale(1.1); }
+
+.act-btn.edit {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+.act-btn.edit:hover { background: rgba(251, 191, 36, 0.2); transform: scale(1.1); }
+
+.act-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.act-btn.danger:hover { background: rgba(239, 68, 68, 0.2); transform: scale(1.1); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .tasks-board {
+    grid-template-columns: 1fr;
+  }
+  .task-col {
+    max-height: none;
+  }
 }
