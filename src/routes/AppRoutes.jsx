@@ -18,6 +18,7 @@ import Settings        from '../pages/Settings/Settings';
 import AIAssistant from '../pages/AIAssistant/AIAssistant';
 import Profile         from '../pages/Profile/Profile';
 import Courses from '../pages/Courses/Courses';
+import AIChat from '../components/AIChat/AIChat';
 
 
 const Guard = ({ children, roles }) => {
@@ -68,7 +69,7 @@ const AppRoutes = () => {
         <Route path="/employee/ai-assistant" element={<Guard roles={['employee']}><AIAssistant /></Guard>} />
       </Routes>
 
-
+      {user && <AIChat />}
     </BrowserRouter>
   );
 };

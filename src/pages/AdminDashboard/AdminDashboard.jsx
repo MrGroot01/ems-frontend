@@ -203,7 +203,7 @@ export default function AdminDashboard() {
 
       <div className="dash-main">
         <Navbar title="Dashboard" subtitle="Admin Overview"
-          unreadNotifs={unread} onMenuClick={() => setMobileOpen(true)} />
+          unreadNotifs={unread} onMenuClick={() => setMobileOpen(true)} employees={allEmployees} attendance={attendance}  />
 
         <div className="dash-content">
           <div className="welcome-banner">
