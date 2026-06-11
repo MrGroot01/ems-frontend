@@ -58,32 +58,56 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
+  /* ── role-specific content ── */
+  const EMPLOYEE_CONTENT = {
+    title: <>Your Work,<br /><span className="hl">Simplified.</span></>,
+    sub: 'Check your attendance, apply for leaves, download payslips, and stay on top of your schedule — all from one place.',
+    badges: ['📅 My Attendance', '🏖️ Leave Requests', '💰 Payslips', '📊 My Reports'],
+  };
+
+  const ADMIN_CONTENT = {
+    title: <>Your HR,<br /><span className="hl">Reimagined.</span></>,
+    sub: 'Manage your entire workforce, track attendance, approve leaves, run payroll & generate reports from one powerful dashboard.',
+    badges: ['✅ JWT Secured', '📊 Analytics', '🌓 Dark Mode', '📱 Responsive'],
+  };
+
+  const content = role === 'admin' ? ADMIN_CONTENT : EMPLOYEE_CONTENT;
+
   return (
     <div className="login-page">
       <div className="login-bg" />
 
-      {/* LEFT */}
+      {/* ── LEFT ── */}
       <div className="login-left">
         <div className="login-logo">
           <div className="login-logo-box">🏢</div>
           <div className="login-logo-text">EMS <span>Pro</span></div>
         </div>
-        <h1 className="login-hero-title">
-          Your HR,<br />
-          <span className="hl">Reimagined.</span>
-        </h1>
-        <p className="login-hero-sub">
-          A powerful, secure employee management platform built for modern teams.
-          Manage attendance, leaves, payroll & more from one place.
-        </p>
+
+        <h1 className="login-hero-title">{content.title}</h1>
+        <p className="login-hero-sub">{content.sub}</p>
+
         <div className="login-badges">
-          {['✅ JWT Secured','📊 Analytics','🌓 Dark Mode','📱 Responsive'].map(b => (
+          {content.badges.map(b => (
             <span key={b} className="badge">{b}</span>
           ))}
         </div>
+
+        {/* Extra admin stats panel */}
+        {role === 'admin' && (
+          <div className="admin-stats">
+            
+          </div>
+        )}
+
+        {/* Extra employee quick-info */}
+        {role === 'employee' && (
+          <div></div>
+          
+        )}
       </div>
 
-      {/* RIGHT */}
+      {/* ── RIGHT ── */}
       <div className="login-right">
         <div className="login-card">
           <div className="login-card-head">
@@ -95,7 +119,9 @@ export default function Login() {
             {[['employee','👤 Employee'],['admin','🛡️ Admin']].map(([val,label]) => (
               <button key={val} type="button"
                 className={`role-tab ${role === val ? 'active' : ''}`}
-                onClick={() => setRole(val)}>{label}</button>
+                onClick={() => { setRole(val); setError(''); setErrs({}); }}>
+                {label}
+              </button>
             ))}
           </div>
 
@@ -105,10 +131,13 @@ export default function Login() {
             <div className="field">
               <label>Email Address</label>
               <div className="field-wrap">
-                <span className="field-ico">✉️</span>
-                <input type="email" name="email" value={form.email}
+                <span className="field-ico field-ico--email" />
+                <input
+                  type="email" name="email" value={form.email}
                   onChange={change} placeholder="you@company.com"
-                  className={errs.email ? 'is-error' : ''} />
+                  className={errs.email ? 'is-error' : ''}
+                  autoFocus
+                />
               </div>
               {errs.email && <p className="field-err">{errs.email}</p>}
             </div>
@@ -116,11 +145,13 @@ export default function Login() {
             <div className="field">
               <label>Password</label>
               <div className="field-wrap">
-                <span className="field-ico">🔒</span>
-                <input type={showPwd ? 'text' : 'password'} name="password"
+                <span className="field-ico field-ico--lock" />
+                <input
+                  type={showPwd ? 'text' : 'password'} name="password"
                   value={form.password} onChange={change}
                   placeholder="Enter password"
-                  className={errs.password ? 'is-error' : ''} />
+                  className={errs.password ? 'is-error' : ''}
+                />
                 <button type="button" className="eye-btn"
                   onClick={() => setShowPwd(p => !p)}>
                   {showPwd ? '🙈' : '👁️'}
@@ -147,14 +178,21 @@ export default function Login() {
               disabled={loading || !captchaVerified}
               style={{ opacity: captchaVerified ? 1 : 0.6 }}>
               {loading
-                ? <><div className="spin"/>&nbsp;Signing in…</>
+                ? <><div className="spin" />&nbsp;Signing in…</>
                 : 'Sign In →'}
             </button>
           </form>
 
-          <p className="alt-link">
-            New here? <Link to="/register">Create an account</Link>
-          </p>
+          {/* ── Only admin can register new accounts ── */}
+          {role === 'admin' ? (
+            <p className="alt-link">
+              New here? <Link to="/register">Create an account</Link>
+            </p>
+          ) : (
+            <p className="alt-link emp-note">
+              🔒 Contact your admin to get an account
+            </p>
+          )}
         </div>
       </div>
     </div>
