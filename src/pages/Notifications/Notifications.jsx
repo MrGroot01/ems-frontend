@@ -5,13 +5,18 @@ import Modal   from '../../components/Modal/Modal';
 import { notificationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import '../AdminDashboard/AdminDashboard.css';
-import '../Attendance/Attendance.css';
+import './Notifications.css';
 
 const NOTIF_ICONS = {
   info:'ℹ️', success:'✅', warning:'⚠️', leave:'🏖️',
-  task:'✅', payroll:'💰', announcement:'📢'
+  task:'✅', payroll:'💰', announcement:'📢',
 };
 const NOTIF_TYPES = ['announcement','leave','task','payroll','info','warning'];
+
+const TYPE_PILL = {
+  leave:'pill-leave', task:'pill-task', payroll:'pill-payroll',
+  announcement:'pill-announcement', warning:'pill-warning', info:'pill-info',
+};
 
 export default function Notifications() {
   const { isAdmin } = useAuth();
@@ -33,7 +38,8 @@ export default function Notifications() {
       const res  = await notificationsAPI.getAll();
       const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
       setNotifs(data);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
   const handleMarkRead = async (id) => {
@@ -53,8 +59,9 @@ export default function Notifications() {
       const res = await notificationsAPI.broadcast(form);
       setShowSend(false);
       setForm({ type:'announcement', title:'', message:'' });
-      setSuccessMsg(`✅ ${res.data.message}`);
+      setSuccessMsg(`✅ ${res.data.message || 'Announcement sent!'}`);
       setTimeout(() => setSuccessMsg(''), 3000);
+      fetchNotifs();
     } catch (e) {
       setSendErr(e.response?.data?.error || 'Failed to send announcement');
     } finally { setSending(false); }
@@ -81,13 +88,16 @@ export default function Notifications() {
         <Navbar title="Notifications" unreadNotifs={unread} onMenuClick={() => setMobileOpen(true)} />
         <div className="dash-content">
 
+          {/* Success toast */}
           {successMsg && (
             <div style={{background:'rgba(16,185,129,.12)',border:'1px solid rgba(16,185,129,.3)',
-              borderRadius:12,padding:'12px 18px',color:'#34d399',fontSize:14,fontWeight:600,marginBottom:20}}>
+              borderRadius:12,padding:'12px 18px',color:'#34d399',fontSize:14,
+              fontWeight:600,marginBottom:20}}>
               {successMsg}
             </div>
           )}
 
+          {/* Header */}
           <div className="page-header">
             <div>
               <h1>🔔 Notifications</h1>
@@ -98,7 +108,8 @@ export default function Notifications() {
                 <button className="qa-btn" onClick={handleMarkAllRead}>✅ Mark all read</button>
               )}
               {isAdmin() && (
-                <button className="qa-btn primary" onClick={() => { setForm({type:'announcement',title:'',message:''}); setSendErr(''); setShowSend(true); }}>
+                <button className="qa-btn primary"
+                  onClick={() => { setForm({type:'announcement',title:'',message:''}); setSendErr(''); setShowSend(true); }}>
                   📢 Broadcast
                 </button>
               )}
@@ -108,68 +119,103 @@ export default function Notifications() {
           {/* Filter tabs */}
           <div className="leave-tabs" style={{marginBottom:20}}>
             {['all','unread',...NOTIF_TYPES].map(t => (
-              <button key={t} className={`leave-tab ${filter===t?'active':''}`} onClick={() => setFilter(t)}>
+              <button key={t}
+                className={`leave-tab ${filter===t?'active':''}`}
+                onClick={() => setFilter(t)}>
                 {t.charAt(0).toUpperCase()+t.slice(1)}
                 {t==='unread' && unread>0 && (
-                  <span style={{marginLeft:6,background:'#ef4444',color:'#fff',fontSize:10,fontWeight:800,padding:'1px 6px',borderRadius:20}}>{unread}</span>
+                  <span style={{marginLeft:6,background:'#ef4444',color:'#fff',
+                    fontSize:10,fontWeight:800,padding:'1px 6px',borderRadius:20}}>
+                    {unread}
+                  </span>
                 )}
               </button>
             ))}
           </div>
 
-          {/* Notification list */}
+          {/* List */}
           {loading ? (
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {[1,2,3,4].map(i=><div key={i} className="skeleton" style={{height:80,borderRadius:14}}/>)}
+              {[1,2,3,4].map(i=>(
+                <div key={i} className="skeleton" style={{height:80,borderRadius:14}}/>
+              ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="empty-state"><div className="empty-ico">🔕</div><p>No notifications</p></div>
+            <div className="empty-state">
+              <div className="empty-ico">🔕</div>
+              <p>No notifications{filter!=='all'?` in "${filter}"`:''}
+              </p>
+            </div>
           ) : (
-            filtered.map(n => (
-              <div key={n.id}
-                className={`notif-page-item ${!n.is_read?'unread':''}`}
-                onClick={() => !n.is_read && handleMarkRead(n.id)}
-                style={{cursor: !n.is_read ? 'pointer' : 'default'}}>
-                <span className="notif-page-ico">{NOTIF_ICONS[n.type]||'🔔'}</span>
-                <div className="notif-page-body">
-                  <div className="notif-page-title">{n.title}</div>
-                  <div className="notif-page-msg">{n.message}</div>
-                  <div style={{display:'flex',gap:10,marginTop:6,alignItems:'center'}}>
-                    <span className="notif-page-time">{timeAgo(n.created_at)}</span>
-                    {n.sender_name && <span style={{fontSize:11,color:'rgba(255,255,255,.25)'}}>from {n.sender_name}</span>}
-                    <span className="pill pill-gray" style={{fontSize:10}}>{n.type}</span>
+            <div style={{display:'flex',flexDirection:'column',gap:0}}>
+              {filtered.map(n => (
+                <div key={n.id}
+                  className={`notif-page-item ${!n.is_read?'unread':''}`}
+                  onClick={() => !n.is_read && handleMarkRead(n.id)}
+                  style={{cursor: !n.is_read ? 'pointer' : 'default'}}>
+
+                  <span className="notif-page-ico">{NOTIF_ICONS[n.type]||'🔔'}</span>
+
+                  <div className="notif-page-body">
+                    <div className="notif-page-title">{n.title}</div>
+                    <div className="notif-page-msg">{n.message}</div>
+                    <div style={{display:'flex',gap:8,marginTop:8,alignItems:'center',flexWrap:'wrap'}}>
+                      <span className="notif-page-time">{timeAgo(n.created_at)}</span>
+                      {n.sender_name && (
+                        <span style={{fontSize:11,color:'rgba(255,255,255,.25)'}}>
+                          from <strong style={{color:'rgba(255,255,255,.4)'}}>{n.sender_name}</strong>
+                        </span>
+                      )}
+                      <span className={`pill ${TYPE_PILL[n.type]||'pill-gray'}`}
+                        style={{fontSize:10,padding:'2px 8px'}}>
+                        {n.type}
+                      </span>
+                    </div>
                   </div>
+
+                  {!n.is_read && <div className="notif-page-unread-dot"/>}
                 </div>
-                {!n.is_read && <div className="notif-page-unread-dot"/>}
-              </div>
-            ))
+              ))}
+            </div>
           )}
+
         </div>
       </div>
 
-      {/* BROADCAST MODAL */}
-      <Modal open={showSend} onClose={() => setShowSend(false)} title="📢 Send Announcement"
+      {/* Broadcast modal */}
+      <Modal open={showSend} onClose={() => setShowSend(false)}
+        title="📢 Send Announcement"
         footer={<>
           <button className="btn-ghost" onClick={() => setShowSend(false)}>Cancel</button>
           <button className="btn-primary" onClick={handleBroadcast} disabled={sending}>
             {sending ? <><div className="spin"/>Sending…</> : '📤 Send to All'}
           </button>
         </>}>
-        {sendErr && <div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.3)',borderRadius:10,padding:'10px 14px',color:'#fca5a5',fontSize:13,marginBottom:14}}>⚠ {sendErr}</div>}
+        {sendErr && (
+          <div style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.3)',
+            borderRadius:10,padding:'10px 14px',color:'#fca5a5',fontSize:13,marginBottom:14}}>
+            ⚠ {sendErr}
+          </div>
+        )}
         <div className="field">
           <label>Type</label>
           <select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}>
-            {NOTIF_TYPES.map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+            {NOTIF_TYPES.map(t=>(
+              <option key={t} value={t}>
+                {NOTIF_ICONS[t]} {t.charAt(0).toUpperCase()+t.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
         <div className="field">
           <label>Title *</label>
-          <input type="text" placeholder="Announcement title" value={form.title}
-            onChange={e=>setForm(p=>({...p,title:e.target.value}))}/>
+          <input type="text" placeholder="Announcement title"
+            value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))}/>
         </div>
         <div className="field">
           <label>Message *</label>
-          <textarea placeholder="Write your announcement…" style={{minHeight:120}} value={form.message}
+          <textarea placeholder="Write your announcement…"
+            style={{minHeight:120}} value={form.message}
             onChange={e=>setForm(p=>({...p,message:e.target.value}))}/>
         </div>
       </Modal>

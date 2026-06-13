@@ -5,22 +5,6 @@
   gap: 6px;
 }
 
-/* Admin calendar: taller cells to fit mini pills */
-.admin-calendar .attend-day {
-  aspect-ratio: unset;
-  min-height: 72px;
-  padding: 8px 6px 6px;
-  align-items: flex-start;
-  justify-content: flex-start;
-  flex-direction: column;
-  gap: 4px;
-  cursor: pointer;
-}
-.admin-calendar .attend-day:hover:not(.empty) {
-  transform: scale(1.03);
-  border-color: rgba(99,102,241,.4);
-}
-
 .attend-day-label {
   text-align: center;
   font-size: 11px;
@@ -47,16 +31,12 @@
   cursor: default;
   transition: transform .15s, border-color .15s, box-shadow .15s;
   position: relative;
+  user-select: none;
 }
-.attend-day:hover:not(.empty) { transform: scale(1.06); }
+.attend-day:hover:not(.empty):not(.future) { transform: scale(1.05); }
 
-.attend-day-num {
-  line-height: 1;
-  font-size: 13px;
-  font-weight: 700;
-}
+.attend-day-num { line-height: 1; font-size: 13px; font-weight: 700; }
 
-/* Small dot indicator */
 .attend-day-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
@@ -66,52 +46,46 @@
 }
 
 /* ── Status variants ── */
-.attend-day.present {
-  background: rgba(16,185,129,.15);
-  border-color: rgba(16,185,129,.35);
-  color: #34d399;
-}
-.attend-day.absent {
-  background: rgba(239,68,68,.15);
-  border-color: rgba(239,68,68,.4);
-  color: #f87171;
-}
-.attend-day.late {
-  background: rgba(245,158,11,.13);
-  border-color: rgba(245,158,11,.35);
-  color: #fbbf24;
-}
-.attend-day.wfh {
-  background: rgba(99,102,241,.14);
-  border-color: rgba(99,102,241,.35);
-  color: #818cf8;
-}
-.attend-day.half_day {
-  background: rgba(251,146,60,.13);
-  border-color: rgba(251,146,60,.35);
-  color: #fb923c;
-}
+.attend-day.present  { background:rgba(16,185,129,.15); border-color:rgba(16,185,129,.35); color:#34d399; }
+.attend-day.absent   { background:rgba(239,68,68,.15);  border-color:rgba(239,68,68,.4);   color:#f87171; }
+.attend-day.late     { background:rgba(245,158,11,.13); border-color:rgba(245,158,11,.35); color:#fbbf24; }
+.attend-day.wfh      { background:rgba(99,102,241,.14); border-color:rgba(99,102,241,.35); color:#818cf8; }
+.attend-day.half_day { background:rgba(251,146,60,.13); border-color:rgba(251,146,60,.35); color:#fb923c; }
 
-/* Past days with no record */
+/* Past with no record → subtle red hint */
 .attend-day.no-record {
-  background: rgba(239,68,68,.06);
-  border-color: rgba(239,68,68,.15);
-  color: rgba(248,113,113,.4);
+  background: rgba(239,68,68,.05);
+  border-color: rgba(239,68,68,.12);
+  color: rgba(255,255,255,.25);
 }
 
-/* Weekend no record */
+/* Weekend no record → very muted */
 .attend-day.weekend {
   background: rgba(255,255,255,.025);
   border-color: rgba(255,255,255,.04);
-  color: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.18);
+}
+
+/* Future dates → dim and not clickable */
+.attend-day.future {
+  background: rgba(255,255,255,.02);
+  border-color: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.15);
+  cursor: default !important;
+  opacity: 0.5;
+}
+.attend-day.future:hover { transform: none !important; }
+
+.attend-day.weekend-future {
+  opacity: 0.3;
 }
 
 /* Today ring */
-.attend-day.today          { box-shadow: 0 0 0 2px #6366f1; color: #fff; font-weight: 800; }
-.attend-day.today.present  { box-shadow: 0 0 0 2px #10b981; }
-.attend-day.today.absent   { box-shadow: 0 0 0 2px #ef4444; }
-.attend-day.today.late     { box-shadow: 0 0 0 2px #f59e0b; }
-.attend-day.today.wfh      { box-shadow: 0 0 0 2px #6366f1; }
+.attend-day.today           { box-shadow: 0 0 0 2px #6366f1; font-weight: 800; color: #fff; }
+.attend-day.today.present   { box-shadow: 0 0 0 2px #10b981; }
+.attend-day.today.absent    { box-shadow: 0 0 0 2px #ef4444; }
+.attend-day.today.late      { box-shadow: 0 0 0 2px #f59e0b; }
+.attend-day.today.wfh       { box-shadow: 0 0 0 2px #6366f1; }
 
 .attend-day.empty {
   background: transparent;
@@ -119,7 +93,24 @@
   pointer-events: none;
 }
 
-/* ── Admin mini pills inside each day cell ── */
+/* ── Admin calendar: taller cells ── */
+.admin-calendar .attend-day {
+  aspect-ratio: unset;
+  min-height: 72px;
+  padding: 8px 6px 6px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+.admin-calendar .attend-day:hover:not(.empty):not(.future) {
+  transform: scale(1.02);
+  border-color: rgba(99,102,241,.35);
+  z-index: 1;
+}
+
+/* Mini count pills inside admin cells */
 .admin-day-pills {
   display: flex;
   flex-wrap: wrap;
@@ -131,17 +122,19 @@
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 5px;
-  line-height: 1.4;
+  line-height: 1.5;
+  min-width: 18px;
+  text-align: center;
 }
-.adp.present  { background: rgba(16,185,129,.25);  color: #34d399; }
-.adp.absent   { background: rgba(239,68,68,.25);   color: #f87171; }
-.adp.late     { background: rgba(245,158,11,.25);  color: #fbbf24; }
-.adp.wfh      { background: rgba(99,102,241,.25);  color: #818cf8; }
-.adp.half_day { background: rgba(251,146,60,.25);  color: #fb923c; }
+.adp.present  { background:rgba(16,185,129,.3);  color:#34d399; }
+.adp.absent   { background:rgba(239,68,68,.3);   color:#f87171; }
+.adp.late     { background:rgba(245,158,11,.3);  color:#fbbf24; }
+.adp.wfh      { background:rgba(99,102,241,.3);  color:#818cf8; }
+.adp.half_day { background:rgba(251,146,60,.3);  color:#fb923c; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .attend-day { font-size: 11px; border-radius: 7px; }
-  .admin-calendar .attend-day { min-height: 54px; padding: 6px 4px 4px; }
+  .admin-calendar .attend-day { min-height: 54px; padding: 5px 3px; }
   .adp { font-size: 9px; padding: 1px 3px; }
 }
