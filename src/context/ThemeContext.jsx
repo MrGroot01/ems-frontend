@@ -13,16 +13,17 @@ export const ThemeProvider = ({ children }) => {
     if (isDark) {
       root.setAttribute('data-theme', 'dark');
 
-      // ── Backgrounds ──────────────────────────────────
-      root.style.setProperty('--bg-primary',   '#0a0c12');   // page bg
-      root.style.setProperty('--bg-secondary', '#0f1219');   // sidebar/nav
-      root.style.setProperty('--bg-card',      '#151821');   // cards
-      root.style.setProperty('--bg-card-hover','#1a1e29');
-      root.style.setProperty('--bg-input',     '#13161f');
+      // ── Backgrounds — layered for depth ─────────────────
+      // sidebar/navbar (darkest) < page bg < cards (lightest)
+      root.style.setProperty('--bg-primary',   '#0b0e14');   // page bg
+      root.style.setProperty('--bg-secondary', '#0d0f16');   // sidebar/navbar
+      root.style.setProperty('--bg-card',      '#181c27');   // cards — pop forward
+      root.style.setProperty('--bg-card-hover','#1f2430');
+      root.style.setProperty('--bg-input',     '#15181f');
 
-      // ── Borders ──────────────────────────────────────
-      root.style.setProperty('--border',       'rgba(255,255,255,.08)');
-      root.style.setProperty('--border-strong','rgba(255,255,255,.14)');
+      // ── Borders — slightly more visible ─────────────────
+      root.style.setProperty('--border',       'rgba(255,255,255,.10)');
+      root.style.setProperty('--border-strong','rgba(255,255,255,.16)');
 
       // ── Text ─────────────────────────────────────────
       root.style.setProperty('--text-primary', '#f1f3f9');
@@ -31,16 +32,16 @@ export const ThemeProvider = ({ children }) => {
       root.style.setProperty('--text-dim',     '#4b5366');
 
       // ── Shadow ───────────────────────────────────────
-      root.style.setProperty('--shadow-card',  '0 4px 24px rgba(0,0,0,.4)');
+      root.style.setProperty('--shadow-card',  '0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.24)');
       root.style.setProperty('--shadow-lg',    '0 12px 40px rgba(0,0,0,.5)');
 
     } else {
       root.setAttribute('data-theme', 'light');
 
       // ── Backgrounds ──────────────────────────────────
-      root.style.setProperty('--bg-primary',   '#f7f8fa');   // page bg
-      root.style.setProperty('--bg-secondary', '#ffffff');   // sidebar/nav
-      root.style.setProperty('--bg-card',      '#ffffff');   // cards
+      root.style.setProperty('--bg-primary',   '#f7f8fa');
+      root.style.setProperty('--bg-secondary', '#ffffff');
+      root.style.setProperty('--bg-card',      '#ffffff');
       root.style.setProperty('--bg-card-hover','#f4f5f7');
       root.style.setProperty('--bg-input',     '#f4f5f7');
 

@@ -5,14 +5,14 @@
    Fallback defaults below = DARK theme
 ══════════════════════════════════════════════════════════════ */
 :root {
-  --bg-primary:    #0a0c12;
-  --bg-secondary:  #0f1219;
-  --bg-card:       #151821;
-  --bg-card-hover: #1a1e29;
-  --bg-input:      #13161f;
+  --bg-primary:    #0b0e14;
+  --bg-secondary:  #0d0f16;
+  --bg-card:       #181c27;
+  --bg-card-hover: #1f2430;
+  --bg-input:      #15181f;
 
-  --border:        rgba(255,255,255,.08);
-  --border-strong: rgba(255,255,255,.14);
+  --border:        rgba(255,255,255,.10);
+  --border-strong: rgba(255,255,255,.16);
 
   --text-primary:   #f1f3f9;
   --text-secondary: #c2c7d6;
@@ -33,7 +33,7 @@
   --info:        #0891b2;
   --info-rgb:    8,145,178;
 
-  --shadow-card: 0 4px 24px rgba(0,0,0,.4);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.24);
   --shadow-lg:   0 12px 40px rgba(0,0,0,.5);
 }
 
@@ -122,6 +122,7 @@ body {
   margin-bottom: 18px;
   box-shadow: var(--shadow-card);
   transition: background .2s, border-color .2s;
+  animation: cardFadeIn .25s ease;
 }
 .section-card-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -145,6 +146,7 @@ body {
   border-radius: 14px;
   padding: 18px 20px;
   box-shadow: var(--shadow-card);
+  animation: cardFadeIn .25s ease;
 }
 .stat-value { color: var(--text-primary); font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
 .stat-label { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
@@ -157,6 +159,35 @@ body {
 .stat-trend.down { background: rgba(var(--danger-rgb),.12);  color: var(--danger);  }
 .stat-trend.flat { background: var(--bg-input); color: var(--text-muted); }
 
+/* ── Stat card icon — colored circular background ──────────── */
+.stat-icon-circle {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+.stat-icon-circle.indigo  { background: rgba(91,91,246,.15); }
+.stat-icon-circle.green   { background: rgba(22,163,74,.15); }
+.stat-icon-circle.amber   { background: rgba(217,119,6,.15); }
+.stat-icon-circle.red     { background: rgba(225,29,72,.15); }
+.stat-icon-circle.cyan    { background: rgba(8,145,178,.15); }
+.stat-icon-circle.purple  { background: rgba(139,92,246,.15); }
+
+/* ── Hover lift for interactive cards ───────────────────────── */
+.section-card.interactive,
+.stat-card.interactive {
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.section-card.interactive:hover,
+.stat-card.interactive:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+}
+
 /* Chart card */
 .chart-card {
   background: var(--bg-card);
@@ -164,6 +195,7 @@ body {
   border-radius: 14px;
   padding: 22px;
   box-shadow: var(--shadow-card);
+  animation: cardFadeIn .25s ease;
 }
 .chart-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px; }
 .chart-card-head h3 { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
@@ -173,6 +205,7 @@ body {
 .recharts-text tspan { fill: var(--text-muted) !important; }
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line { stroke: var(--border) !important; }
+.recharts-bar-rectangle path { filter: saturate(0.92); }
 .custom-tooltip {
   background: var(--bg-card-hover) !important;
   border: 1px solid var(--border-strong) !important;
@@ -231,6 +264,19 @@ body {
 .pill-gray   { background: var(--bg-input); color: var(--text-muted); }
 
 /* ══════════════════════════════════════════════════════════════
+   NEWS / TICKER PILL
+══════════════════════════════════════════════════════════════ */
+.news-pill {
+  background: rgba(var(--accent-rgb),.12);
+  border: 1px solid rgba(var(--accent-rgb),.2);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
    ACTION BUTTONS
 ══════════════════════════════════════════════════════════════ */
 .action-btns { display: flex; gap: 8px; }
@@ -252,8 +298,8 @@ body {
    WELCOME BANNER
 ══════════════════════════════════════════════════════════════ */
 .welcome-banner {
-  background: linear-gradient(135deg, rgba(var(--accent-rgb),.12), rgba(139,92,246,.08));
-  border: 1px solid rgba(var(--accent-rgb),.2);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),.10), rgba(139,92,246,.05));
+  border: 1px solid rgba(var(--accent-rgb),.15);
   border-radius: 16px;
   padding: 26px 30px;
   margin-bottom: 28px;
@@ -395,6 +441,7 @@ body {
   padding: 18px;
   box-shadow: var(--shadow-card);
   transition: all .15s;
+  animation: cardFadeIn .25s ease;
 }
 .emp-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 .emp-card-name { color: var(--text-primary); font-weight: 700; font-size: 14px; }
@@ -554,6 +601,14 @@ body {
   animation: spin-lg .8s linear infinite;
 }
 @keyframes spin-lg { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════════
+   CARD ENTRANCE ANIMATION
+══════════════════════════════════════════════════════════════ */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE
