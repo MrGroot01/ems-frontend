@@ -388,14 +388,21 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .lp-left  { display: none; }
-  .lp-right { width: 100%; flex: 1; }
-  .lp-page  { justify-content: center; }
+@media (max-width: 1100px) and (min-width: 901px) {
+  .lp-hero-title, .lp-hero-pre { font-size: 44px; }
+  .lp-left { padding: 60px 40px; }
+  .lp-stats { gap: 8px; }
+  .lp-stat-card { padding: 12px 14px; }
 }
-
-@media (max-width: 480px) {
-  .lp-right { padding: 20px; }
-  .lp-card  { padding: 28px 22px; }
-  .lp-card-head h2 { font-size: 20px; }
+ 
+@media (max-width: 900px) {
+  /* Right panel takes full viewport height nicely on mobile */
+  .lp-right { padding: 16px; min-height: 100vh; }
+  .lp-card  { padding: 32px 24px; border-radius: 22px; }
+}
+ 
+@media (max-width: 360px) {
+  .lp-card { padding: 24px 16px; }
+  .lp-card-head h2 { font-size: 19px; }
+  .lp-tabs { font-size: 12px; }
 }

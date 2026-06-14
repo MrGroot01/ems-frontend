@@ -663,17 +663,43 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .st-layout { grid-template-columns: 1fr; }
-  .st-nav-card { position: static; }
-  .st-nav-list { flex-direction: row; flex-wrap: wrap; }
-  .st-nav-item { flex: none; }
-  .st-nav-user { display: none; }
-  .st-accent-grid { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 768px) {
+  .st-panel-header h2 { font-size: 18px; }
+ 
+  .st-section-head { padding: 16px 18px 12px; }
+  .st-section-body { padding: 16px 18px; }
+  .st-section-footer { padding: 14px 18px; flex-wrap: wrap; }
+ 
+  .st-save-btn { width: 100%; justify-content: center; }
+ 
+  /* nav pills scroll horizontally instead of wrapping awkwardly */
+  .st-nav-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .st-nav-list::-webkit-scrollbar { display: none; }
+  .st-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .st-nav-arrow { display: none; }
+ 
+  /* photo row stacks */
+  .st-photo-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+ 
+  /* theme cards stack on very small screens handled at 600px already */
 }
-
-@media (max-width: 600px) {
-  .st-form-grid { grid-template-columns: 1fr; }
-  .st-theme-row { flex-direction: column; }
-  .st-font-row  { flex-direction: column; }
+ 
+@media (max-width: 480px) {
+  .st-accent-grid { grid-template-columns: repeat(4, 1fr); }
+  .st-toast {
+    left: 12px; right: 12px; max-width: none;
+    top: 12px;
+  }
 }

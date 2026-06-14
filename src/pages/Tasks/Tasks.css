@@ -198,11 +198,30 @@
 .act-btn.danger:hover { background: rgba(239, 68, 68, 0.2); transform: scale(1.1); }
 
 /* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .tasks-board {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .task-card { padding: 12px; }
+  .task-card-title { font-size: 13px; }
+ 
+  /* status pills wrap nicely */
+  .task-card > div[style*="display:flex"][style*="gap:4"] {
+    gap: 6px !important;
   }
-  .task-col {
-    max-height: none;
+ 
+  /* footer assignee + actions wrap if needed */
+  .task-card-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+ 
+@media (max-width: 480px) {
+  /* Tasks page controls bar: stack search/filters/buttons */
+  .dash-content > div[style*="display:flex"][style*="gap:10"][style*="marginBottom:20"] {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .dash-content > div[style*="display:flex"][style*="gap:10"] select,
+  .dash-content > div[style*="display:flex"][style*="gap:10"] button {
+    width: 100%;
   }
 }

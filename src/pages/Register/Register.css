@@ -256,8 +256,21 @@
 @keyframes rgRot { to { transform: rotate(360deg); } }
 
 /* ── Responsive ───────────────────────────────────────────── */
-@media(max-width:600px) {
-  .rg-card { padding: 28px 20px; }
-  .rg-grid { grid-template-columns: 1fr; }
-  .rg-grid .span2 { grid-column: 1; }
+@media (max-width: 768px) and (min-width: 601px) {
+  .rg-card { padding: 36px; max-width: 600px; }
+}
+ 
+@media (max-width: 600px) {
+  .rg-page { padding: 16px; align-items: flex-start; }
+  .rg-card { padding: 24px 18px; border-radius: 20px; margin-top: 12px; }
+  .rg-head h1 { font-size: 22px; }
+  .rg-icon { width: 50px; height: 50px; font-size: 24px; }
+ 
+  .rg-photo-row { flex-wrap: wrap; }
+  .rg-photo-circle { width: 56px; height: 56px; }
+ 
+  .rg-toast {
+    left: 12px; right: 12px; top: 12px;
+    max-width: none;
+  }
 }

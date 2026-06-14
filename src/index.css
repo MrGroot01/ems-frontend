@@ -666,3 +666,16 @@ body {
 .st-font-card { background: var(--bg-input); border-color: var(--border); color: var(--text-secondary); }
 .st-accent-name { color: var(--text-muted); }
 .st-toggle { background: var(--bg-input); }
+
+
+@media (max-width: 768px) {
+  /* DetailModal-style inline modals used in AdminDashboard.jsx
+     (position:fixed, inset:0, background rgba(0,0,0,0.75)) */
+  body { -webkit-text-size-adjust: 100%; }
+ 
+  /* Prevent horizontal page scroll caused by wide inline tables */
+  .dash-content { max-width: 100vw; }
+ 
+  /* Generic responsive table wrapper helper */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

@@ -249,11 +249,18 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .two-col {
-    grid-template-columns: 1fr;
-  }
-  .two-col .span2 {
-    grid-column: 1;
-  }
+@media (max-width: 768px) {
+  .emp-card { padding: 16px; }
+  .emp-card-av { width: 48px; height: 48px; font-size: 18px; }
+  .emp-card-name { font-size: 14px; }
+ 
+  /* Table view: allow horizontal scroll */
+  .section-card { overflow-x: auto; }
+  .data-table { min-width: 600px; }
+}
+ 
+@media (max-width: 480px) {
+  .emp-card-top { flex-wrap: wrap; gap: 8px; }
+  .emp-card-footer { flex-wrap: wrap; gap: 8px; }
+  .action-btns { width: 100%; justify-content: flex-start; }
 }

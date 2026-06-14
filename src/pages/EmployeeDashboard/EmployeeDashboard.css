@@ -116,3 +116,52 @@
 .notif-title { font-size: 13px; font-weight: 700; color: #fff; }
 .notif-msg   { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 3px; line-height: 1.5; }
 .notif-time  { font-size: 11px; color: rgba(255,255,255,.25); margin-top: 5px; }
+
+
+@media (max-width: 768px) {
+  /* Profile mini card stacks */
+  .profile-mini {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    padding: 18px;
+    gap: 14px;
+  }
+  .profile-mini-av { width: 56px; height: 56px; font-size: 22px; }
+  .profile-mini-name { font-size: 17px; }
+ 
+  /* Clock card stacks, buttons full width */
+  .clock-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    gap: 16px;
+  }
+  .clock-time { font-size: 36px; }
+  .clock-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .clock-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+ 
+  /* Leave balance grid: 2 columns */
+  .leave-balance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+ 
+@media (max-width: 420px) {
+  .leave-balance-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .lb-item { padding: 12px; }
+  .lb-val { font-size: 22px; }
+ 
+  .clock-time { font-size: 30px; }
+}

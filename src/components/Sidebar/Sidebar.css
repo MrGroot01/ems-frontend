@@ -9,7 +9,7 @@
   position: fixed; left:0; top:0; bottom:0;
   z-index: 100;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: width .3s cubic-bezier(.4,0,.2,1), background .2s, border-color .2s;
+  transition: width .3s cubic-bezier(.4,0,.2,1), background .2s, border-color .2s, transform .3s;
 }
 .sidebar.collapsed { width: 70px; }
 
@@ -126,16 +126,55 @@
 .sb-logout:hover { background: rgba(var(--danger-rgb),.12); }
 .sidebar.collapsed .sb-logout-txt { opacity:0; width:0; overflow:hidden; }
 
-/* mobile */
-.sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:99; }
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET (≤1024px): auto-collapse to icon rail
+   The .dash-main margin-left is handled in AdminDashboard.css
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .sidebar {
+    width: 70px;
+  }
+  /* Hide collapse toggle on tablet — width is fixed */
+  .sb-toggle { display: none; }
+  .sb-brand-txt,
+  .sb-user-info,
+  .sb-txt,
+  .sb-badge,
+  .sb-label,
+  .sb-logout-txt { opacity: 0; pointer-events: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE (≤768px): off-canvas drawer
+══════════════════════════════════════════════════════════════ */
+.sb-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:99;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
 @media(max-width:768px) {
-  .sidebar { transform:translateX(-100%); width:252px !important; }
+  .sidebar {
+    transform:translateX(-100%);
+    width: 270px !important;
+    box-shadow: 0 0 40px rgba(0,0,0,.4);
+  }
   .sidebar.mob-open { transform:translateX(0); }
   .sb-overlay { display:block; }
+
+  /* When drawer is open, everything shows fully regardless of collapsed state */
   .sidebar.mob-open .sb-brand-txt,
   .sidebar.mob-open .sb-user-info,
   .sidebar.mob-open .sb-txt,
   .sidebar.mob-open .sb-badge,
-  .sidebar.mob-open .sb-label { opacity:1 !important; pointer-events:auto !important; }
+  .sidebar.mob-open .sb-label,
+  .sidebar.mob-open .sb-logout-txt {
+    opacity:1 !important; pointer-events:auto !important; width:auto !important;
+  }
   .sb-toggle { display:none; }
+
+  /* Larger touch targets on mobile nav items */
+  .sb-item { padding: 12px 10px; font-size: 14px; }
+  .sb-ico  { font-size: 18px; }
 }
