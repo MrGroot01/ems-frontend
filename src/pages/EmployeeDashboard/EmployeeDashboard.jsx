@@ -5,25 +5,40 @@ import StatCard from '../../components/StatCard/StatCard';
 import { TaskStatusChart } from '../../components/Charts/Charts';
 import { attendanceAPI, leavesAPI, tasksAPI, payrollAPI, notificationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import FaceAttendance from '../../components/FaceAttendance/FaceAttendance';  // ← NEW
+import FaceAttendance from '../../components/FaceAttendance/FaceAttendance';
 import '../AdminDashboard/AdminDashboard.css';
 import './EmployeeDashboard.css';
 
+// ── Check if employee is on approved leave today ──────────────
+const getTodayLeave = (leaves) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return leaves.find(l => {
+    if (l.status !== 'approved') return false;
+    const start = new Date(l.start_date); start.setHours(0,0,0,0);
+    const end   = new Date(l.end_date);   end.setHours(0,0,0,0);
+    return today >= start && today <= end;
+  }) || null;
+};
+
+const LEAVE_TYPE_LABEL = {
+  sick: 'Sick Leave', casual: 'Casual Leave',
+  annual: 'Annual Leave', unpaid: 'Unpaid Leave',
+};
+
 export default function EmployeeDashboard() {
   const { user } = useAuth();
-  const [mobileOpen,   setMobileOpen]   = useState(false);
-  const [checkedIn,    setCheckedIn]    = useState(false);
-  const [checkLoading, setCheckLoading] = useState(false);
-  const [tasks,        setTasks]        = useState([]);
-  const [leaves,       setLeaves]       = useState([]);
-  const [salary,       setSalary]       = useState(null);
-  const [notifs,       setNotifs]       = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [now,          setNow]          = useState(new Date());
-  const [clockMsg,     setClockMsg]     = useState('');
-
-  // ── Face Recognition State ─────────────────────────────
-  const [showFace,      setShowFace]      = useState(false);
+  const [mobileOpen,     setMobileOpen]     = useState(false);
+  const [checkedIn,      setCheckedIn]      = useState(false);
+  const [checkLoading,   setCheckLoading]   = useState(false);
+  const [tasks,          setTasks]          = useState([]);
+  const [leaves,         setLeaves]         = useState([]);
+  const [salary,         setSalary]         = useState(null);
+  const [notifs,         setNotifs]         = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [now,            setNow]            = useState(new Date());
+  const [clockMsg,       setClockMsg]       = useState('');
+  const [showFace,       setShowFace]       = useState(false);
   const [faceRegistered, setFaceRegistered] = useState(false);
 
   useEffect(() => {
@@ -33,15 +48,18 @@ export default function EmployeeDashboard() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // ── Auto-open face modal after login ───────────────────
+  // ── Auto-open face modal only if NOT on leave ─────────────
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
         const res = await attendanceAPI.faceStatus();
         setFaceRegistered(res.data.face_registered);
-        // Auto open if not checked in today
+        // Don't auto-open if on approved leave today
         if (!res.data.checked_in_today) {
-          setShowFace(true);
+          const lRes = await leavesAPI.getMine();
+          const lData = Array.isArray(lRes.data) ? lRes.data : (lRes.data.results || []);
+          const onLeave = getTodayLeave(lData);
+          if (!onLeave) setShowFace(true);   // ← only open if NOT on leave
         }
       } catch { /* ignore */ }
     }, 1200);
@@ -58,27 +76,26 @@ export default function EmployeeDashboard() {
         notificationsAPI.getAll(),
         attendanceAPI.getMine(),
       ]);
-      if (tRes.status==='fulfilled') {
+      if (tRes.status === 'fulfilled') {
         const data = Array.isArray(tRes.value.data) ? tRes.value.data : (tRes.value.data.results || []);
         setTasks(data);
       }
-      if (lRes.status==='fulfilled') {
+      if (lRes.status === 'fulfilled') {
         const data = Array.isArray(lRes.value.data) ? lRes.value.data : (lRes.value.data.results || []);
         setLeaves(data);
       }
-      if (sRes.status==='fulfilled') {
+      if (sRes.status === 'fulfilled') {
         const data = Array.isArray(sRes.value.data) ? sRes.value.data : (sRes.value.data.results || []);
         setSalary(Array.isArray(data) ? data[0] : data);
       }
-      if (nRes.status==='fulfilled') {
+      if (nRes.status === 'fulfilled') {
         const data = Array.isArray(nRes.value.data) ? nRes.value.data : (nRes.value.data.results || []);
         setNotifs(data);
       }
-      if (aRes.status==='fulfilled') {
+      if (aRes.status === 'fulfilled') {
         const data = Array.isArray(aRes.value.data) ? aRes.value.data : (aRes.value.data.results || []);
         const today = new Date().toISOString().split('T')[0];
         const todayRecord = data.find(r => r.date === today);
-        if (todayRecord?.check_in && !todayRecord?.check_out) setCheckedIn(true);
         if (todayRecord?.check_in) setCheckedIn(true);
       }
     } finally { setLoading(false); }
@@ -93,12 +110,8 @@ export default function EmployeeDashboard() {
       setTimeout(() => setClockMsg(''), 3000);
     } catch (e) {
       const msg = e.response?.data?.error || '';
-      if (msg.includes('Already')) {
-        setCheckedIn(true);
-        setClockMsg('Already checked in today');
-      } else {
-        setClockMsg('Check-in failed. Try again.');
-      }
+      if (msg.includes('Already')) { setCheckedIn(true); setClockMsg('Already checked in today'); }
+      else setClockMsg('Check-in failed. Try again.');
     } finally { setCheckLoading(false); }
   };
 
@@ -114,7 +127,6 @@ export default function EmployeeDashboard() {
     } finally { setCheckLoading(false); }
   };
 
-  // ── Face Success Handler ───────────────────────────────
   const handleFaceSuccess = (result) => {
     setShowFace(false);
     if (result.type === 'checkin' || result.type === 'manual') {
@@ -126,25 +138,27 @@ export default function EmployeeDashboard() {
       setFaceRegistered(true);
       setClockMsg('✅ Face registered! Opening check-in...');
       setTimeout(() => setClockMsg(''), 3000);
-      // Re-open after 1.5s for face check-in
       setTimeout(() => setShowFace(true), 1500);
     }
   };
 
-  const timeStr  = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const dateStr  = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
-  const initials = user?.full_name?.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-  const unread   = notifs.filter(n => !n.is_read).length;
+  // ── Derived values ────────────────────────────────────────
+  const todayLeave    = getTodayLeave(leaves);   // null or leave object
+  const isOnLeave     = !!todayLeave;
 
+  const timeStr       = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const dateStr       = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  const initials      = user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const unread        = notifs.filter(n => !n.is_read).length;
   const activeTasks   = tasks.filter(t => t.status !== 'completed');
   const pendingLeaves = leaves.filter(l => l.status === 'pending').length;
   const completedPct  = tasks.length > 0
-    ? Math.round(tasks.filter(t=>t.status==='completed').length/tasks.length*100) : 0;
+    ? Math.round(tasks.filter(t => t.status === 'completed').length / tasks.length * 100) : 0;
 
   const TASK_CHART = [
-    { status:'Completed',   count: tasks.filter(t=>t.status==='completed').length   },
-    { status:'In Progress', count: tasks.filter(t=>t.status==='in_progress').length },
-    { status:'Pending',     count: tasks.filter(t=>t.status==='todo').length        },
+    { status:'Completed',   count: tasks.filter(t => t.status === 'completed').length   },
+    { status:'In Progress', count: tasks.filter(t => t.status === 'in_progress').length },
+    { status:'Pending',     count: tasks.filter(t => t.status === 'todo').length        },
   ];
 
   const NOTIF_ICONS = {
@@ -170,112 +184,131 @@ export default function EmployeeDashboard() {
             </div>
             <div>
               <div className="profile-mini-name">{user?.full_name}</div>
-              <div className="profile-mini-role">
-                {user?.department} · {user?.employee_id}
-              </div>
+              <div className="profile-mini-role">{user?.department} · {user?.employee_id}</div>
               <div className="profile-mini-tags">
                 <span className="profile-mini-tag">👤 Employee</span>
                 <span className="profile-mini-tag">✉️ {user?.email}</span>
-                {user?.phone && (
-                  <span className="profile-mini-tag">📱 {user?.phone}</span>
+                {user?.phone && <span className="profile-mini-tag">📱 {user?.phone}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* ── ON LEAVE BANNER — replaces clock card ── */}
+          {isOnLeave ? (
+            <div className="on-leave-card">
+              <div className="on-leave-left">
+                {/* Animated leave icon */}
+                <div className="on-leave-icon">🏖️</div>
+                <div>
+                  <div className="on-leave-title">You're on {LEAVE_TYPE_LABEL[todayLeave.leave_type] || 'Leave'} Today</div>
+                  <div className="on-leave-sub">
+                    Enjoy your day off! Your attendance is automatically marked.
+                  </div>
+                  <div className="on-leave-dates">
+                    <span>📅 {todayLeave.start_date}</span>
+                    <span style={{color:'rgba(255,255,255,.3)'}}>→</span>
+                    <span>📅 {todayLeave.end_date}</span>
+                    <span className="on-leave-pill">
+                      {todayLeave.days || todayLeave.number_of_days || ''} {(todayLeave.days||todayLeave.number_of_days)>1?'days':'day'}
+                    </span>
+                  </div>
+                  {todayLeave.reason && (
+                    <div style={{fontSize:12,color:'rgba(255,255,255,.35)',marginTop:6}}>
+                      💬 {todayLeave.reason}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="on-leave-right">
+                {/* Live time still shows */}
+                <div className="clock-time" style={{fontSize:36}}>{timeStr}</div>
+                <div className="clock-date" style={{fontSize:13}}>{dateStr}</div>
+                <div style={{
+                  marginTop:12, padding:'6px 16px', borderRadius:99,
+                  background:'rgba(16,185,129,.15)',
+                  border:'1px solid rgba(16,185,129,.3)',
+                  color:'#34d399', fontSize:12, fontWeight:600,
+                  display:'inline-flex', alignItems:'center', gap:6,
+                }}>
+                  <span style={{width:7,height:7,borderRadius:'50%',
+                    background:'#34d399',display:'inline-block',
+                    animation:'pulse 1.5s infinite'}}/>
+                  Leave Approved
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ── NORMAL CLOCK CARD ── */
+            <div className="clock-card">
+              <div className="clock-left">
+                <div className="clock-time">{timeStr}</div>
+                <div className="clock-date">{dateStr}</div>
+                <div className="clock-status">
+                  <div className={`clock-dot ${checkedIn ? '' : 'out'}`}/>
+                  <span className="clock-status-txt">
+                    {checkedIn ? 'You are checked in' : 'Not checked in yet'}
+                  </span>
+                </div>
+                <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{
+                    fontSize:12, padding:'3px 10px', borderRadius:20,
+                    background: faceRegistered ? 'rgba(99,102,241,.2)' : 'rgba(255,255,255,.05)',
+                    color: faceRegistered ? '#a5b4fc' : '#64748b',
+                    border:`1px solid ${faceRegistered ? 'rgba(99,102,241,.4)' : 'rgba(255,255,255,.08)'}`,
+                  }}>
+                    {faceRegistered ? '📷 Face ID Registered' : '📷 Face ID Not Set'}
+                  </span>
+                </div>
+                {clockMsg && (
+                  <div style={{
+                    fontSize:13, marginTop:8,
+                    color: clockMsg.startsWith('✅') ? '#34d399' : '#f87171',
+                  }}>
+                    {clockMsg}
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* ── Clock Card ── */}
-          <div className="clock-card">
-            <div className="clock-left">
-              <div className="clock-time">{timeStr}</div>
-              <div className="clock-date">{dateStr}</div>
-              <div className="clock-status">
-                <div className={`clock-dot ${checkedIn?'':'out'}`}/>
-                <span className="clock-status-txt">
-                  {checkedIn ? 'You are checked in' : 'Not checked in yet'}
-                </span>
+              <div className="clock-actions">
+                <button className="clock-btn in"
+                  onClick={() => setShowFace(true)}
+                  disabled={checkedIn || checkLoading}
+                  style={{
+                    background: checkedIn ? undefined : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                  }}>
+                  📷 Face Check-In
+                </button>
+                <button className="clock-btn in"
+                  onClick={handleCheckIn}
+                  disabled={checkedIn || checkLoading}
+                  style={{ fontSize:13, opacity:0.85 }}>
+                  {checkLoading ? '⏳' : '✋'} Manual
+                </button>
+                <button className="clock-btn out"
+                  onClick={handleCheckOut}
+                  disabled={!checkedIn || checkLoading}>
+                  {checkLoading ? '⏳' : '🔴'} Check Out
+                </button>
               </div>
-              {/* Face registered badge */}
-              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{
-                  fontSize: 12, padding: '3px 10px', borderRadius: 20,
-                  background: faceRegistered
-                    ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: faceRegistered ? '#a5b4fc' : '#64748b',
-                  border: `1px solid ${faceRegistered
-                    ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                }}>
-                  {faceRegistered ? '📷 Face ID Registered' : '📷 Face ID Not Set'}
-                </span>
-              </div>
-              {clockMsg && (
-                <div style={{
-                  fontSize: 13,
-                  color: clockMsg.startsWith('✅') ? '#34d399' : '#f87171',
-                  marginTop: 8,
-                }}>
-                  {clockMsg}
-                </div>
-              )}
             </div>
-
-            <div className="clock-actions">
-              {/* Face Check-In */}
-              <button
-                className="clock-btn in"
-                onClick={() => setShowFace(true)}
-                disabled={checkedIn || checkLoading}
-                style={{
-                  background: checkedIn
-                    ? undefined
-                    : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-                  display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', gap: 6,
-                }}
-              >
-                📷 Face Check-In
-              </button>
-
-              {/* Manual Check-In */}
-              <button
-                className="clock-btn in"
-                onClick={handleCheckIn}
-                disabled={checkedIn || checkLoading}
-                style={{ fontSize: 13, opacity: 0.85 }}
-              >
-                {checkLoading ? '⏳' : '✋'} Manual
-              </button>
-
-              {/* Check-Out */}
-              <button
-                className="clock-btn out"
-                onClick={handleCheckOut}
-                disabled={!checkedIn || checkLoading}
-              >
-                {checkLoading ? '⏳' : '🔴'} Check Out
-              </button>
-            </div>
-          </div>
+          )}
 
           {/* Stat cards */}
-          <div className="stats-grid" style={{marginBottom:28}}>
-            <StatCard icon="✅" label="Tasks Completed"
-              value={`${completedPct}%`} color="green"
-              trend="up" trendVal="" barPercent={completedPct}/>
-            <StatCard icon="🎯" label="Active Tasks"
-              value={activeTasks.length} color="indigo"
-              trend="flat" trendVal="" barPercent={60}/>
-            <StatCard icon="🏖️" label="Pending Leave"
-              value={pendingLeaves} color="amber"
-              trend="flat" trendVal="" barPercent={pendingLeaves*20}/>
+          <div className="stats-grid" style={{ marginBottom:28 }}>
+            <StatCard icon="✅" label="Tasks Completed" value={`${completedPct}%`}
+              color="green" trend="up" trendVal="" barPercent={completedPct}/>
+            <StatCard icon="🎯" label="Active Tasks" value={activeTasks.length}
+              color="indigo" trend="flat" trendVal="" barPercent={60}/>
+            <StatCard icon="🏖️" label="Pending Leave" value={pendingLeaves}
+              color="amber" trend="flat" trendVal="" barPercent={pendingLeaves*20}/>
             <StatCard icon="💰" label="Net Salary"
-              value={salary
-                ? `₹${Number(salary.net||0).toLocaleString()}`
-                : 'Not set'}
+              value={salary ? `₹${Number(salary.net||0).toLocaleString()}` : 'Not set'}
               color="cyan" trend="up" trendVal="" barPercent={75}/>
           </div>
 
           <div className="charts-grid">
-            {/* Tasks list */}
+            {/* Tasks */}
             <div className="section-card">
               <div className="section-card-head">
                 <h3>🎯 My Tasks</h3>
@@ -283,15 +316,10 @@ export default function EmployeeDashboard() {
               </div>
               {loading ? (
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                  {[1,2,3].map(i =>
-                    <div key={i} className="skeleton" style={{height:60}}/>
-                  )}
+                  {[1,2,3].map(i => <div key={i} className="skeleton" style={{height:60}}/>)}
                 </div>
               ) : activeTasks.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-ico">🎉</div>
-                  <p>All tasks done!</p>
-                </div>
+                <div className="empty-state"><div className="empty-ico">🎉</div><p>All tasks done!</p></div>
               ) : (
                 <div className="task-list">
                   {activeTasks.slice(0,4).map(t => (
@@ -302,18 +330,14 @@ export default function EmployeeDashboard() {
                           <div className="task-item-meta">
                             Due: {t.due_date}&nbsp;·&nbsp;
                             <span className={`pill ${
-                              t.priority==='urgent' ? 'pill-red' :
-                              t.priority==='high'   ? 'pill-amber' :
-                              t.priority==='medium' ? 'pill-blue' : 'pill-gray'
-                            }`}>
+                              t.priority==='urgent'?'pill-red':t.priority==='high'?'pill-amber':
+                              t.priority==='medium'?'pill-blue':'pill-gray'}`}>
                               {t.priority}
                             </span>
                           </div>
                         </div>
                         <span className={`pill ${
-                          t.status==='completed'   ? 'pill-green' :
-                          t.status==='in_progress' ? 'pill-blue' : 'pill-gray'
-                        }`}>
+                          t.status==='completed'?'pill-green':t.status==='in_progress'?'pill-blue':'pill-gray'}`}>
                           {t.status.replace('_',' ')}
                         </span>
                       </div>
@@ -339,15 +363,13 @@ export default function EmployeeDashboard() {
               </div>
               <div className="leave-balance-grid">
                 {[
-                  { type:'Sick',   total:8,  used: leaves.filter(l=>l.leave_type==='sick'  &&l.status==='approved').reduce((s,l)=>s+l.days,0) },
-                  { type:'Casual', total:12, used: leaves.filter(l=>l.leave_type==='casual'&&l.status==='approved').reduce((s,l)=>s+l.days,0) },
-                  { type:'Annual', total:20, used: leaves.filter(l=>l.leave_type==='annual'&&l.status==='approved').reduce((s,l)=>s+l.days,0) },
-                  { type:'Unpaid', total:'∞', used: 0 },
+                  { type:'Sick',   total:8,  used: leaves.filter(l=>l.leave_type==='sick'  &&l.status==='approved').reduce((s,l)=>s+(l.days||l.number_of_days||0),0) },
+                  { type:'Casual', total:12, used: leaves.filter(l=>l.leave_type==='casual'&&l.status==='approved').reduce((s,l)=>s+(l.days||l.number_of_days||0),0) },
+                  { type:'Annual', total:20, used: leaves.filter(l=>l.leave_type==='annual'&&l.status==='approved').reduce((s,l)=>s+(l.days||l.number_of_days||0),0) },
+                  { type:'Unpaid', total:'∞', used:0 },
                 ].map(lb => (
                   <div key={lb.type} className="lb-item">
-                    <div className="lb-val">
-                      {typeof lb.total==='number' ? lb.total-lb.used : lb.total}
-                    </div>
+                    <div className="lb-val">{typeof lb.total==='number' ? lb.total-lb.used : lb.total}</div>
                     <div className="lb-type">{lb.type}</div>
                     <div className="lb-used">{lb.used} used</div>
                   </div>
@@ -363,40 +385,26 @@ export default function EmployeeDashboard() {
               </div>
               {salary ? (
                 <div className="salary-rows">
-                  <div className="sal-row">
-                    <span className="sal-label">Basic</span>
-                    <span className="sal-val">₹{Number(salary.basic||0).toLocaleString()}</span>
-                  </div>
-                  <div className="sal-row">
-                    <span className="sal-label">HRA</span>
-                    <span className="sal-val green">+₹{Number(salary.hra||0).toLocaleString()}</span>
-                  </div>
-                  <div className="sal-row">
-                    <span className="sal-label">Transport</span>
-                    <span className="sal-val green">+₹{Number(salary.transport||0).toLocaleString()}</span>
-                  </div>
-                  <div className="sal-row">
-                    <span className="sal-label">PF</span>
-                    <span className="sal-val red">-₹{Number(salary.pf_deduction||0).toLocaleString()}</span>
-                  </div>
-                  <div className="sal-row">
-                    <span className="sal-label">Tax</span>
-                    <span className="sal-val red">-₹{Number(salary.tax_deduction||0).toLocaleString()}</span>
-                  </div>
-                  <div className="sal-row" style={{
-                    borderTop:'1px solid rgba(255,255,255,.1)',
-                    paddingTop:12, marginTop:4,
-                  }}>
+                  {[
+                    {label:'Basic',     val:`₹${Number(salary.basic||0).toLocaleString()}`,         cls:''},
+                    {label:'HRA',       val:`+₹${Number(salary.hra||0).toLocaleString()}`,          cls:'green'},
+                    {label:'Transport', val:`+₹${Number(salary.transport||0).toLocaleString()}`,    cls:'green'},
+                    {label:'PF',        val:`-₹${Number(salary.pf_deduction||0).toLocaleString()}`, cls:'red'},
+                    {label:'Tax',       val:`-₹${Number(salary.tax_deduction||0).toLocaleString()}`,cls:'red'},
+                  ].map(r => (
+                    <div key={r.label} className="sal-row">
+                      <span className="sal-label">{r.label}</span>
+                      <span className={`sal-val ${r.cls}`}>{r.val}</span>
+                    </div>
+                  ))}
+                  <div className="sal-row" style={{borderTop:'1px solid rgba(255,255,255,.1)',paddingTop:12,marginTop:4}}>
                     <span style={{fontWeight:800,color:'#fff',fontSize:14}}>Net Salary</span>
-                    <span className="sal-val total">
-                      ₹{Number(salary.net||0).toLocaleString()}
-                    </span>
+                    <span className="sal-val total">₹{Number(salary.net||0).toLocaleString()}</span>
                   </div>
                 </div>
               ) : (
                 <div className="empty-state">
-                  <div className="empty-ico">💰</div>
-                  <p>Salary not configured yet</p>
+                  <div className="empty-ico">💰</div><p>Salary not configured yet</p>
                 </div>
               )}
             </div>
@@ -409,10 +417,7 @@ export default function EmployeeDashboard() {
               <a href="/employee/notifications" className="see-all">View All →</a>
             </div>
             {notifs.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-ico">🔕</div>
-                <p>No notifications yet</p>
-              </div>
+              <div className="empty-state"><div className="empty-ico">🔕</div><p>No notifications yet</p></div>
             ) : (
               <div className="notif-list">
                 {notifs.slice(0,5).map(n => (
@@ -421,9 +426,7 @@ export default function EmployeeDashboard() {
                     <div className="notif-content">
                       <div className="notif-title">{n.title}</div>
                       <div className="notif-msg">{n.message}</div>
-                      <div className="notif-time">
-                        {new Date(n.created_at).toLocaleString()}
-                      </div>
+                      <div className="notif-time">{new Date(n.created_at).toLocaleString()}</div>
                     </div>
                   </div>
                 ))}
@@ -434,14 +437,13 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* ── Face Attendance Modal ── */}
-      {showFace && (
+      {/* Face modal — only show if not on leave */}
+      {showFace && !isOnLeave && (
         <FaceAttendance
           onSuccess={handleFaceSuccess}
           onClose={() => setShowFace(false)}
         />
       )}
-
     </div>
   );
 }
