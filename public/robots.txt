@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ems-frontend-blue-six.vercel.app/sitemap.xml
