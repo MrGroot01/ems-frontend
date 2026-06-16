@@ -1,14 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import Navbar  from '../../components/Navbar/Navbar';
-import { AttendanceBarChart, SalaryLineChart, DepartmentPieChart, TaskStatusChart } from '../../components/Charts/Charts';
-import { employeesAPI, attendanceAPI, leavesAPI, tasksAPI, payrollAPI } from '../../services/api';
+import {
+  AttendanceBarChart,
+  SalaryLineChart,
+  DepartmentPieChart,
+  TaskStatusChart,
+} from '../../components/Charts/Charts';
+import {
+  employeesAPI,
+  attendanceAPI,
+  leavesAPI,
+  tasksAPI,
+  payrollAPI,
+} from '../../services/api';
 import '../AdminDashboard/AdminDashboard.css';
 import './Reports.css';
 
-// ── CSV helper ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun',
+                     'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function getPeriodCutoff(p) {
+  const d = new Date();
+  if      (p === '1m') d.setMonth(d.getMonth() - 1);
+  else if (p === '3m') d.setMonth(d.getMonth() - 3);
+  else if (p === '6m') d.setMonth(d.getMonth() - 6);
+  else if (p === '1y') d.setFullYear(d.getFullYear() - 1);
+  return d;
+}
+
+function fmtCurrency(n) {
+  if (n >= 10000000) return `₹${(n/10000000).toFixed(1)}Cr`;
+  if (n >= 100000)   return `₹${(n/100000).toFixed(1)}L`;
+  if (n >= 1000)     return `₹${(n/1000).toFixed(0)}K`;
+  return `₹${n}`;
+}
+
+function fmtSalaryTick(val) {
+  if (val >= 100000) return `₹${(val/100000).toFixed(0)}L`;
+  if (val >= 1000)   return `₹${(val/1000).toFixed(0)}K`;
+  return `₹${val}`;
+}
+
 function downloadCSV(filename, rows) {
-  if (!rows || rows.length === 0) { alert('No data found.'); return; }
+  if (!rows?.length) { alert('No data found.'); return; }
   const headers = Object.keys(rows[0]);
   const csv = [
     headers.join(','),
@@ -26,86 +64,153 @@ function downloadCSV(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
-// ── Download functions ─────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// DOWNLOAD FUNCTIONS
+// ══════════════════════════════════════════════════════════════
 async function dlAttendance() {
   const { data } = await attendanceAPI.getAll();
   const rows = (Array.isArray(data) ? data : data.results || []).map(a => ({
-    Employee:        a.employee_name || a.employee || '—',
-    Date:            a.date         || '—',
-    Status:          a.status       || '—',
-    CheckIn:         a.check_in     || '—',
-    CheckOut:        a.check_out    || '—',
-    WorkingHours:    a.working_hours|| '—',
-    AttendanceType:  a.attendance_type || '—',
+    Employee:       a.employee_name || a.employee || '—',
+    Date:           a.date          || '—',
+    Status:         a.status        || '—',
+    CheckIn:        a.check_in      || '—',
+    CheckOut:       a.check_out     || '—',
+    WorkingHours:   a.working_hours || '—',
+    AttendanceType: a.attendance_type || '—',
   }));
   downloadCSV('attendance_report.csv', rows);
 }
 async function dlPayroll() {
   const { data } = await payrollAPI.getAllPayslips();
   const rows = (Array.isArray(data) ? data : data.results || []).map(p => ({
-    Employee: p.user_name || '—', Month: p.month || '—', Year: p.year || '—',
-    Basic: p.basic || '—', Gross: p.gross || '—',
-    Deductions: p.deductions || '—', Net: p.net || '—',
-    DaysWorked: p.days_worked || '—', Paid: p.paid ? 'Yes' : 'No',
+    Employee:   p.user_name   || '—',
+    Month:      p.month       || '—',
+    Year:       p.year        || '—',
+    Basic:      p.basic       || '—',
+    Gross:      p.gross       || '—',
+    Deductions: p.deductions  || '—',
+    Net:        p.net         || '—',
+    DaysWorked: p.days_worked || '—',
+    Paid:       p.paid ? 'Yes' : 'No',
   }));
   downloadCSV('payroll_report.csv', rows);
 }
 async function dlLeaves() {
   const { data } = await leavesAPI.getAll();
   const rows = (Array.isArray(data) ? data : data.results || []).map(l => ({
-    Employee: l.user_name || '—', LeaveType: l.leave_type || '—',
-    StartDate: l.start_date || '—', EndDate: l.end_date || '—',
-    Days: l.days || '—', Status: l.status || '—',
+    Employee:  l.user_name   || '—',
+    LeaveType: l.leave_type  || '—',
+    StartDate: l.start_date  || '—',
+    EndDate:   l.end_date    || '—',
+    Days:      l.days        || '—',
+    Status:    l.status      || '—',
   }));
   downloadCSV('leave_report.csv', rows);
 }
 async function dlTasks() {
   const { data } = await tasksAPI.getAll();
   const rows = (Array.isArray(data) ? data : data.results || []).map(t => ({
-    Title: t.title || '—', AssignedTo: t.assigned_to_name || '—',
-    Status: t.status || '—', Priority: t.priority || '—', DueDate: t.due_date || '—',
+    Title:      t.title            || '—',
+    AssignedTo: t.assigned_to_name || '—',
+    Status:     t.status           || '—',
+    Priority:   t.priority         || '—',
+    DueDate:    t.due_date         || '—',
+    Progress:   `${t.progress||0}%`,
   }));
   downloadCSV('task_report.csv', rows);
 }
 async function dlEmployees() {
   const { data } = await employeesAPI.getAll();
   const rows = (Array.isArray(data) ? data : data.results || []).map(e => ({
-    FullName: e.user?.full_name || '—', Email: e.user?.email || '—',
-    EmployeeID: e.user?.employee_id || '—', Department: e.department || '—',
-    Designation: e.designation || '—', Status: e.status || '—',
+    FullName:    e.user?.full_name   || e.full_name   || '—',
+    Email:       e.user?.email       || e.email       || '—',
+    EmployeeID:  e.user?.employee_id || e.employee_id || '—',
+    Department:  e.department        || '—',
+    Designation: e.designation       || '—',
+    Status:      e.status            || '—',
   }));
   downloadCSV('employee_report.csv', rows);
 }
 
 const REPORTS = [
-  { icon:'📅', title:'Attendance Report',   desc:'Monthly check-in/out records',  fn: dlAttendance },
-  { icon:'💰', title:'Payroll Report',      desc:'Salary & payslip summary',       fn: dlPayroll    },
-  { icon:'🏖️', title:'Leave Report',        desc:'Leave taken by all employees',   fn: dlLeaves     },
-  { icon:'✅', title:'Task Report',         desc:'Task completion statistics',      fn: dlTasks      },
-  { icon:'👥', title:'Employee Report',    desc:'Full employee directory',          fn: dlEmployees  },
+  { icon:'📅', title:'Attendance Report', desc:'Daily check-in/out records with status', fn: dlAttendance },
+  { icon:'💰', title:'Payroll Report',    desc:'Salary, payslips & deductions',          fn: dlPayroll    },
+  { icon:'🏖️', title:'Leave Report',      desc:'All leave requests & approvals',         fn: dlLeaves     },
+  { icon:'✅', title:'Task Report',       desc:'Task status, priority & progress',        fn: dlTasks      },
+  { icon:'👥', title:'Employee Report',  desc:'Full employee directory & departments',    fn: dlEmployees  },
 ];
 
-// ── Month name helper ──────────────────────────────────────
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// ══════════════════════════════════════════════════════════════
+// SKELETON
+// ══════════════════════════════════════════════════════════════
+function Skeleton({ h = 220 }) {
+  return <div className="skeleton" style={{ height: h, borderRadius: 16 }} />;
+}
 
+// ══════════════════════════════════════════════════════════════
+// TREND BADGE
+// ══════════════════════════════════════════════════════════════
+function Trend({ val, unit = '%' }) {
+  if (val === null || val === undefined) return null;
+  const up = val >= 0;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 3,
+      fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+      background: up ? 'rgba(16,185,129,.15)' : 'rgba(239,68,68,.15)',
+      color: up ? '#34d399' : '#f87171',
+    }}>
+      {up ? '↑' : '↓'} {Math.abs(val)}{unit}
+    </span>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// MINI PROGRESS BAR
+// ══════════════════════════════════════════════════════════════
+function MiniBar({ pct, color = '#6366f1' }) {
+  return (
+    <div style={{ height: 5, background: 'rgba(255,255,255,.08)', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
+      <div style={{ width: `${Math.min(100, pct)}%`, height: '100%', background: color, borderRadius: 4, transition: 'width .6s ease' }} />
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ══════════════════════════════════════════════════════════════
 export default function Reports() {
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [period,      setPeriod]      = useState('6m');
-  const [downloading, setDownloading] = useState(null);
-  const [loading,     setLoading]     = useState(true);
+  const [mobileOpen,   setMobileOpen]   = useState(false);
+  const [period,       setPeriod]       = useState('6m');
+  const [downloading,  setDownloading]  = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [lastUpdated,  setLastUpdated]  = useState(null);
 
-  // ── Live chart data ──────────────────────────────────────
-  const [attendData,  setAttendData]  = useState([]);
-  const [salaryData,  setSalaryData]  = useState([]);
-  const [deptData,    setDeptData]    = useState([]);
-  const [taskData,    setTaskData]    = useState([]);
-  const [summaryStats,setSummaryStats]= useState({
-    totalPayroll: '—', avgAttendance: '—', tasksCompleted: '—', leaveDays: '—',
+  // Chart data
+  const [attendData,   setAttendData]   = useState([]);
+  const [salaryData,   setSalaryData]   = useState([]);
+  const [deptData,     setDeptData]     = useState([]);
+  const [taskData,     setTaskData]     = useState([]);
+
+  // KPI stats
+  const [stats, setStats] = useState({
+    totalPayroll:    null,
+    avgAttendance:   null,
+    absenceRate:     null,
+    tasksCompleted:  null,
+    taskCompRate:    null,
+    leaveDays:       null,
+    pendingLeaves:   null,
+    totalEmployees:  null,
+    overdueCount:    null,
   });
 
-  useEffect(() => { fetchAllData(); }, [period]);
+  // Detailed tables
+  const [topEmployees,  setTopEmployees]  = useState([]);  // top attendees
+  const [recentLeaves,  setRecentLeaves]  = useState([]);
+  const [taskBreakdown, setTaskBreakdown] = useState({});
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
       const [empRes, attRes, leaveRes, taskRes, payRes] = await Promise.allSettled([
@@ -116,13 +221,18 @@ export default function Reports() {
         payrollAPI.getAllPayslips(),
       ]);
 
-      // ── EMPLOYEES → Department pie chart ────────────────
+      const cutoff = getPeriodCutoff(period);
+
+      // ── EMPLOYEES ─────────────────────────────────────────
+      let totalEmployees = 0;
       if (empRes.status === 'fulfilled') {
         const emps = Array.isArray(empRes.value.data)
           ? empRes.value.data : (empRes.value.data.results || []);
+        totalEmployees = emps.length;
+
         const deptMap = {};
         emps.forEach(e => {
-          const d = e.department || 'other';
+          const d = e.department || 'Other';
           deptMap[d] = (deptMap[d] || 0) + 1;
         });
         setDeptData(Object.entries(deptMap).map(([name, value]) => ({
@@ -130,114 +240,144 @@ export default function Reports() {
         })));
       }
 
-      // ── ATTENDANCE → Bar chart + avg rate ───────────────
+      // ── ATTENDANCE ────────────────────────────────────────
       if (attRes.status === 'fulfilled') {
         const atts = Array.isArray(attRes.value.data)
           ? attRes.value.data : (attRes.value.data.results || []);
 
-        // Filter by selected period
-        const cutoff = getPeriodCutoff(period);
-        const filtered = atts.filter(a => new Date(a.date) >= cutoff);
+        const filtered = atts.filter(a => a.date && new Date(a.date) >= cutoff);
 
-        // Group by month
+        // Group by month — track present, absent, late separately
         const monthMap = {};
         filtered.forEach(a => {
           const d     = new Date(a.date);
-          const key   = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
-          const short = MONTH_NAMES[d.getMonth()];
-          if (!monthMap[key]) monthMap[key] = { month: short, present: 0, absent: 0 };
-          if (a.status === 'present' || a.status === 'late') monthMap[key].present++;
-          else monthMap[key].absent++;
+          const mKey  = `${d.getFullYear()}-${d.getMonth()}`;
+          const mName = MONTH_NAMES[d.getMonth()];
+          if (!monthMap[mKey]) {
+            monthMap[mKey] = { month: mName, order: d.getMonth(), present: 0, absent: 0, late: 0 };
+          }
+          const s = (a.status || '').toLowerCase();
+          if      (s === 'present') monthMap[mKey].present++;
+          else if (s === 'late')    { monthMap[mKey].late++; monthMap[mKey].present++; }
+          else if (s === 'absent' || s === 'leave' || s === 'holiday') monthMap[mKey].absent++;
+          else                       monthMap[mKey].absent++; // unknown = absent
         });
 
-        const sorted = Object.values(monthMap).sort((a, b) => {
-          const ai = MONTH_NAMES.indexOf(a.month);
-          const bi = MONTH_NAMES.indexOf(b.month);
-          return ai - bi;
-        });
-        setAttendData(sorted.length > 0 ? sorted : []);
+        const sorted = Object.values(monthMap).sort((a, b) => a.order - b.order);
+        setAttendData(sorted);
 
-        // Avg attendance rate
+        // KPI: attendance rate and absence rate
         const total   = filtered.length;
-        const present = filtered.filter(a => a.status === 'present' || a.status === 'late').length;
+        const present = filtered.filter(a => {
+          const s = (a.status || '').toLowerCase();
+          return s === 'present' || s === 'late';
+        }).length;
+        const absent  = total - present;
         const rate    = total > 0 ? Math.round((present / total) * 100) : 0;
+        const absRate = total > 0 ? Math.round((absent  / total) * 100) : 0;
 
-        setSummaryStats(prev => ({ ...prev, avgAttendance: `${rate}%` }));
+        // Top attendees by employee
+        const empMap = {};
+        filtered.forEach(a => {
+          const name = a.employee_name || a.employee || 'Unknown';
+          if (!empMap[name]) empMap[name] = { name, present: 0, total: 0 };
+          empMap[name].total++;
+          const s = (a.status || '').toLowerCase();
+          if (s === 'present' || s === 'late') empMap[name].present++;
+        });
+        const topList = Object.values(empMap)
+          .map(e => ({ ...e, rate: Math.round((e.present / e.total) * 100) }))
+          .sort((a, b) => b.rate - a.rate)
+          .slice(0, 5);
+        setTopEmployees(topList);
+
+        setStats(p => ({ ...p, avgAttendance: rate, absenceRate: absRate }));
       }
 
-      // ── LEAVES → leave days taken ────────────────────────
+      // ── LEAVES ────────────────────────────────────────────
       if (leaveRes.status === 'fulfilled') {
         const leaves = Array.isArray(leaveRes.value.data)
           ? leaveRes.value.data : (leaveRes.value.data.results || []);
+
         const approved = leaves.filter(l => l.status === 'approved');
-        const totalDays = approved.reduce((sum, l) => sum + (Number(l.days) || 0), 0);
-        setSummaryStats(prev => ({ ...prev, leaveDays: String(totalDays) }));
+        const pending  = leaves.filter(l => l.status === 'pending');
+        const totalDays = approved.reduce((s, l) => s + (Number(l.days) || 0), 0);
+
+        setRecentLeaves(
+          leaves.slice(0, 5).map(l => ({
+            name:      l.user_name  || '—',
+            type:      l.leave_type || '—',
+            days:      l.days       || 0,
+            status:    l.status     || '—',
+            startDate: l.start_date || '—',
+          }))
+        );
+        setStats(p => ({ ...p, leaveDays: totalDays, pendingLeaves: pending.length }));
       }
 
-      // ── TASKS → status chart + completed count ───────────
+      // ── TASKS ─────────────────────────────────────────────
       if (taskRes.status === 'fulfilled') {
         const tasks = Array.isArray(taskRes.value.data)
           ? taskRes.value.data : (taskRes.value.data.results || []);
 
         const completed  = tasks.filter(t => t.status === 'completed').length;
         const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-        const todo       = tasks.filter(t => t.status === 'todo' || t.status === 'pending').length;
-        const review     = tasks.filter(t => t.status === 'review').length;
-        const cancelled  = tasks.filter(t => t.status === 'cancelled').length;
+        const todo       = tasks.filter(t => t.status === 'todo').length;
+        const overdue    = tasks.filter(t =>
+          t.status !== 'completed' && t.due_date && new Date(t.due_date) < new Date()
+        ).length;
+
+        const compRate = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
 
         setTaskData([
           { status: 'Completed',   count: completed  },
           { status: 'In Progress', count: inProgress },
           { status: 'To Do',       count: todo       },
-          { status: 'Review',      count: review     },
-          { status: 'Cancelled',   count: cancelled  },
+          { status: 'Overdue',     count: overdue    },
         ]);
-        setSummaryStats(prev => ({ ...prev, tasksCompleted: String(completed) }));
+
+        setTaskBreakdown({ completed, inProgress, todo, overdue, total: tasks.length });
+        setStats(p => ({ ...p, tasksCompleted: completed, taskCompRate: compRate, overdueCount: overdue }));
       }
 
-      // ── PAYROLL → salary trend + total payroll ──────────
+      // ── PAYROLL ───────────────────────────────────────────
       if (payRes.status === 'fulfilled') {
         const payslips = Array.isArray(payRes.value.data)
           ? payRes.value.data : (payRes.value.data.results || []);
 
-        // Group net salary by month
+        // Group net salary by month — format Y axis properly
         const salMap = {};
         payslips.forEach(p => {
-          const key = MONTH_NAMES[(p.month || 1) - 1];
-          if (!salMap[key]) salMap[key] = { month: key, amount: 0 };
+          const mIdx = (p.month || 1) - 1;
+          const key  = MONTH_NAMES[mIdx];
+          if (!salMap[key]) salMap[key] = { month: key, order: mIdx, amount: 0, count: 0 };
           salMap[key].amount += Number(p.net || 0);
+          salMap[key].count++;
         });
 
-        // Sort by month order
-        const salSorted = Object.values(salMap).sort(
-          (a, b) => MONTH_NAMES.indexOf(a.month) - MONTH_NAMES.indexOf(b.month)
-        );
-        setSalaryData(salSorted.length > 0 ? salSorted : []);
+        const salSorted = Object.values(salMap)
+          .sort((a, b) => a.order - b.order)
+          .map(s => ({
+            month:     s.month,
+            amount:    s.amount,
+            formatted: fmtCurrency(s.amount),  // used in tooltip
+          }));
 
-        // Total payroll YTD
-        const ytd = payslips.reduce((sum, p) => sum + Number(p.net || 0), 0);
-        const formatted = ytd >= 100000
-          ? `₹${(ytd / 100000).toFixed(1)}L`
-          : `₹${(ytd / 1000).toFixed(0)}K`;
-        setSummaryStats(prev => ({ ...prev, totalPayroll: formatted }));
+        setSalaryData(salSorted);
+
+        const ytd = payslips.reduce((s, p) => s + Number(p.net || 0), 0);
+        setStats(prev => ({ ...prev, totalPayroll: ytd, totalEmployees }));
       }
 
     } catch (e) {
       console.error('Reports fetch error:', e);
     } finally {
       setLoading(false);
+      setLastUpdated(new Date());
     }
-  };
+  }, [period]);
 
-  // ── Period cutoff date ─────────────────────────────────
-  const getPeriodCutoff = (p) => {
-    const d = new Date();
-    if (p === '1m') d.setMonth(d.getMonth() - 1);
-    else if (p === '3m') d.setMonth(d.getMonth() - 3);
-    else if (p === '6m') d.setMonth(d.getMonth() - 6);
-    else if (p === '1y') d.setFullYear(d.getFullYear() - 1);
-    return d;
-  };
+  useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
   const handleDownload = async (report) => {
     setDownloading(report.title);
@@ -255,123 +395,291 @@ export default function Reports() {
     finally { setDownloading(null); }
   };
 
-  const SUMMARY = [
-    { label:'Total Payroll YTD',   value: summaryStats.totalPayroll,   icon:'💰', color:'#818cf8' },
-    { label:'Avg Attendance Rate', value: summaryStats.avgAttendance,  icon:'📅', color:'#34d399' },
-    { label:'Tasks Completed',     value: summaryStats.tasksCompleted, icon:'✅', color:'#60a5fa' },
-    { label:'Leave Days Taken',    value: summaryStats.leaveDays,      icon:'🏖️', color:'#fbbf24' },
+  // ── KPI cards config ────────────────────────────────────
+  const KPI_CARDS = [
+    {
+      label: 'Total Payroll YTD',
+      value: stats.totalPayroll !== null ? fmtCurrency(stats.totalPayroll) : '—',
+      icon: '💰', color: '#818cf8',
+      sub: stats.totalEmployees ? `${stats.totalEmployees} employees` : '',
+      bar: null,
+    },
+    {
+      label: 'Avg Attendance Rate',
+      value: stats.avgAttendance !== null ? `${stats.avgAttendance}%` : '—',
+      icon: '📅', color: '#34d399',
+      sub: stats.absenceRate !== null ? `Absence: ${stats.absenceRate}%` : '',
+      bar: stats.avgAttendance,
+      barColor: '#34d399',
+    },
+    {
+      label: 'Tasks Completed',
+      value: stats.tasksCompleted !== null ? String(stats.tasksCompleted) : '—',
+      icon: '✅', color: '#60a5fa',
+      sub: stats.taskCompRate !== null ? `${stats.taskCompRate}% completion rate` : '',
+      bar: stats.taskCompRate,
+      barColor: '#60a5fa',
+      badge: stats.overdueCount > 0 ? `${stats.overdueCount} overdue` : null,
+      badgeColor: '#f87171',
+    },
+    {
+      label: 'Leave Days Taken',
+      value: stats.leaveDays !== null ? String(stats.leaveDays) : '—',
+      icon: '🏖️', color: '#fbbf24',
+      sub: stats.pendingLeaves !== null ? `${stats.pendingLeaves} pending approval` : '',
+      bar: null,
+    },
   ];
 
-  const Skeleton = () => (
-    <div className="skeleton" style={{height:180,borderRadius:16}}/>
-  );
+  const statusColor = (s) => {
+    if (s === 'approved') return { bg: 'rgba(16,185,129,.15)', color: '#34d399' };
+    if (s === 'pending')  return { bg: 'rgba(245,158,11,.15)', color: '#fbbf24' };
+    if (s === 'rejected') return { bg: 'rgba(239,68,68,.15)',  color: '#f87171' };
+    return { bg: 'rgba(255,255,255,.06)', color: '#94a3b8' };
+  };
 
   return (
     <div className="dash-layout">
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div className="dash-main">
-        <Navbar title="Reports & Analytics" subtitle="Live business intelligence"
-          onMenuClick={() => setMobileOpen(true)} />
+        <Navbar
+          title="Reports & Analytics"
+          subtitle="Live business intelligence"
+          onMenuClick={() => setMobileOpen(true)}
+        />
 
         <div className="dash-content">
 
-          {/* ── Header ──────────────────────────────────── */}
-          <div className="page-header">
+          {/* ── PAGE HEADER ──────────────────────────────── */}
+          <div className="rp-header">
             <div>
-              <h1>📈 Reports & Analytics</h1>
-              <p>Live company-wide performance metrics</p>
+              <h1 className="rp-title">📈 Reports & Analytics</h1>
+              <p className="rp-sub">
+                Live company-wide performance metrics
+                {lastUpdated && (
+                  <span className="rp-updated">
+                    · Updated {lastUpdated.toLocaleTimeString()}
+                  </span>
+                )}
+              </p>
             </div>
-            <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <div className="rp-controls">
               {/* Period selector */}
-              <div style={{display:'flex',background:'rgba(255,255,255,.04)',
-                border:'1px solid rgba(255,255,255,.08)',borderRadius:10,padding:4,gap:4}}>
+              <div className="rp-period-group">
                 {['1m','3m','6m','1y'].map(p => (
                   <button key={p}
-                    style={{padding:'6px 14px',border:'none',borderRadius:8,cursor:'pointer',
-                      fontFamily:'inherit',fontSize:12,fontWeight:700,
-                      background:period===p?'rgba(99,102,241,.25)':'none',
-                      color:period===p?'#fff':'rgba(255,255,255,.4)',transition:'all .2s'}}
-                    onClick={() => setPeriod(p)}>{p}
+                    className={`rp-period-btn ${period === p ? 'active' : ''}`}
+                    onClick={() => setPeriod(p)}>
+                    {p}
                   </button>
                 ))}
               </div>
-
-              {/* Refresh button */}
-              <button
-                onClick={fetchAllData}
-                disabled={loading}
-                style={{padding:'8px 16px',border:'1px solid rgba(255,255,255,.12)',
-                  borderRadius:10,background:'transparent',color:'rgba(255,255,255,.6)',
-                  cursor: loading?'not-allowed':'pointer',fontSize:12,fontFamily:'inherit',
-                  display:'flex',alignItems:'center',gap:6}}>
+              <button className="rp-btn-ghost" onClick={fetchAllData} disabled={loading}>
                 {loading ? '⏳' : '🔄'} {loading ? 'Loading…' : 'Refresh'}
               </button>
-
-              <button className="qa-btn" onClick={handleExportAll}
-                disabled={downloading==='all'}>
-                {downloading==='all' ? '⏳ Exporting…' : '⬇ Export All'}
+              <button className="rp-btn-primary" onClick={handleExportAll}
+                disabled={downloading === 'all'}>
+                {downloading === 'all' ? '⏳ Exporting…' : '⬇ Export All'}
               </button>
             </div>
           </div>
 
-          {/* ── KPI Cards (live) ─────────────────────────── */}
-          <div className="stats-grid" style={{marginBottom:28}}>
-            {SUMMARY.map(s => (
-              <div key={s.label} className="section-card" style={{padding:'20px 22px'}}>
-                <div style={{fontSize:28,marginBottom:10}}>{s.icon}</div>
+          {/* ── KPI CARDS ─────────────────────────────────── */}
+          <div className="rp-kpi-grid">
+            {KPI_CARDS.map(k => (
+              <div key={k.label} className="rp-kpi-card">
+                <div className="rp-kpi-top">
+                  <span className="rp-kpi-icon">{k.icon}</span>
+                  {k.badge && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
+                      background: 'rgba(239,68,68,.15)', color: k.badgeColor,
+                    }}>
+                      ⚠ {k.badge}
+                    </span>
+                  )}
+                </div>
                 {loading
-                  ? <div className="skeleton" style={{height:32,width:'60%',borderRadius:8,marginBottom:8}}/>
-                  : <div style={{fontSize:28,fontWeight:800,color:s.color,letterSpacing:'-1px'}}>
-                      {s.value}
-                    </div>
+                  ? <div className="skeleton" style={{ height: 36, width: '60%', borderRadius: 8, margin: '8px 0' }} />
+                  : <div className="rp-kpi-val" style={{ color: k.color }}>{k.value}</div>
                 }
-                <div style={{fontSize:12,color:'rgba(255,255,255,.4)',marginTop:4}}>{s.label}</div>
+                <div className="rp-kpi-label">{k.label}</div>
+                {k.sub && <div className="rp-kpi-sub">{k.sub}</div>}
+                {k.bar !== null && k.bar !== undefined && (
+                  <MiniBar pct={k.bar} color={k.barColor} />
+                )}
               </div>
             ))}
           </div>
 
-          {/* ── Charts (live) ────────────────────────────── */}
-          <div className="charts-grid">
-            {loading ? <Skeleton/> : <AttendanceBarChart data={attendData}/>}
-            {loading ? <Skeleton/> : <DepartmentPieChart
-              data={deptData.length > 0 ? deptData : [{name:'No data',value:1}]}/>}
-            {loading ? <Skeleton/> : <SalaryLineChart data={salaryData}/>}
-            {loading ? <Skeleton/> : <TaskStatusChart data={taskData}/>}
+          {/* ── CHARTS ROW 1 ──────────────────────────────── */}
+          <div className="charts-grid" style={{ marginBottom: 20 }}>
+            {loading ? <Skeleton h={240} /> : (
+              <div className="rp-chart-card">
+                <div className="rp-chart-head">
+                  <span>📅 Monthly Attendance</span>
+                  <span className="rp-chart-badge">
+                    Present vs Absent
+                  </span>
+                </div>
+                <AttendanceBarChart data={attendData} />
+              </div>
+            )}
+            {loading ? <Skeleton h={240} /> : (
+              <div className="rp-chart-card">
+                <div className="rp-chart-head">
+                  <span>🏢 Headcount by Department</span>
+                  <span className="rp-chart-badge">
+                    {stats.totalEmployees || 0} total
+                  </span>
+                </div>
+                <DepartmentPieChart
+                  data={deptData.length > 0 ? deptData : [{ name: 'No data', value: 1 }]}
+                />
+              </div>
+            )}
           </div>
 
-          {/* ── Download cards ───────────────────────────── */}
-          <div className="section-card" style={{marginTop:4}}>
-            <div className="section-card-head">
-              <h3>📥 Download Reports</h3>
-              <span style={{fontSize:12,color:'rgba(255,255,255,.35)'}}>
-                Live data from database
-              </span>
+          {/* ── CHARTS ROW 2 ──────────────────────────────── */}
+          <div className="charts-grid" style={{ marginBottom: 24 }}>
+            {loading ? <Skeleton h={240} /> : (
+              <div className="rp-chart-card">
+                <div className="rp-chart-head">
+                  <span>💰 Salary Expense Trend</span>
+                  <span className="rp-chart-badge">
+                    {stats.totalPayroll !== null ? fmtCurrency(stats.totalPayroll) : '—'} YTD
+                  </span>
+                </div>
+                <SalaryLineChart data={salaryData} />
+              </div>
+            )}
+            {loading ? <Skeleton h={240} /> : (
+              <div className="rp-chart-card">
+                <div className="rp-chart-head">
+                  <span>✅ Task Overview</span>
+                  <span className="rp-chart-badge">
+                    {taskBreakdown.total || 0} tasks
+                  </span>
+                </div>
+                <TaskStatusChart data={taskData} />
+              </div>
+            )}
+          </div>
+
+          {/* ── DETAIL ROW ─────────────────────────────────── */}
+          <div className="rp-detail-grid">
+
+            {/* Top Attendance */}
+            <div className="section-card rp-detail-card">
+              <div className="rp-detail-head">
+                <span>🏆 Top Attendance</span>
+                <span className="rp-badge-gray">This period</span>
+              </div>
+              {loading ? (
+                [1,2,3].map(i => <div key={i} className="skeleton" style={{height:36,borderRadius:8,marginBottom:8}}/>)
+              ) : topEmployees.length === 0 ? (
+                <div className="rp-empty">No attendance data yet</div>
+              ) : (
+                topEmployees.map((e, i) => (
+                  <div key={e.name} className="rp-rank-row">
+                    <span className="rp-rank-num">{i + 1}</span>
+                    <div className="rp-rank-av">
+                      {e.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="rp-rank-name">{e.name}</div>
+                      <MiniBar pct={e.rate} color={i === 0 ? '#fbbf24' : '#6366f1'} />
+                    </div>
+                    <span className="rp-rank-pct" style={{ color: e.rate >= 90 ? '#34d399' : e.rate >= 75 ? '#fbbf24' : '#f87171' }}>
+                      {e.rate}%
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
-            <div style={{display:'grid',
-              gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:14}}>
+
+            {/* Recent Leaves */}
+            <div className="section-card rp-detail-card">
+              <div className="rp-detail-head">
+                <span>🏖️ Recent Leaves</span>
+                <span className="rp-badge-gray">Latest 5</span>
+              </div>
+              {loading ? (
+                [1,2,3].map(i => <div key={i} className="skeleton" style={{height:36,borderRadius:8,marginBottom:8}}/>)
+              ) : recentLeaves.length === 0 ? (
+                <div className="rp-empty">No leave data yet</div>
+              ) : (
+                recentLeaves.map((l, i) => {
+                  const sc = statusColor(l.status);
+                  return (
+                    <div key={i} className="rp-leave-row">
+                      <div className="rp-rank-av">{l.name.charAt(0)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="rp-rank-name">{l.name}</div>
+                        <div className="rp-leave-meta">
+                          {l.type} · {l.days}d · {l.startDate}
+                        </div>
+                      </div>
+                      <span className="rp-status-pill" style={{ background: sc.bg, color: sc.color }}>
+                        {l.status}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Task Breakdown */}
+            <div className="section-card rp-detail-card">
+              <div className="rp-detail-head">
+                <span>📋 Task Breakdown</span>
+                <span className="rp-badge-gray">{taskBreakdown.total || 0} total</span>
+              </div>
+              {loading ? (
+                [1,2,3,4].map(i => <div key={i} className="skeleton" style={{height:28,borderRadius:8,marginBottom:10}}/>)
+              ) : (
+                [
+                  { label: 'Completed',   count: taskBreakdown.completed  || 0, color: '#10b981' },
+                  { label: 'In Progress', count: taskBreakdown.inProgress || 0, color: '#6366f1' },
+                  { label: 'To Do',       count: taskBreakdown.todo       || 0, color: '#f59e0b' },
+                  { label: 'Overdue',     count: taskBreakdown.overdue    || 0, color: '#ef4444' },
+                ].map(t => {
+                  const pct = taskBreakdown.total > 0
+                    ? Math.round((t.count / taskBreakdown.total) * 100) : 0;
+                  return (
+                    <div key={t.label} style={{ marginBottom: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>{t.label}</span>
+                        <span style={{ color: '#e8eaf2', fontWeight: 700 }}>
+                          {t.count} <span style={{ color: '#6b7280', fontWeight: 400 }}>({pct}%)</span>
+                        </span>
+                      </div>
+                      <MiniBar pct={pct} color={t.color} />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* ── DOWNLOAD CARDS ─────────────────────────────── */}
+          <div className="section-card" style={{ marginTop: 8 }}>
+            <div className="rp-detail-head" style={{ marginBottom: 16 }}>
+              <span>📥 Download Reports</span>
+              <span className="rp-badge-gray">Live data · CSV format</span>
+            </div>
+            <div className="rp-download-grid">
               {REPORTS.map(r => (
-                <div key={r.title}
-                  style={{background:'rgba(255,255,255,.04)',
-                    border:'1px solid rgba(255,255,255,.08)',
-                    borderRadius:14,padding:18,transition:'all .2s'}}
-                  onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(99,102,241,.3)'}
-                  onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,.08)'}
-                >
-                  <div style={{fontSize:26,marginBottom:10}}>{r.icon}</div>
-                  <div style={{fontSize:14,fontWeight:800,color:'#fff',marginBottom:4}}>
-                    {r.title}
-                  </div>
-                  <div style={{fontSize:12,color:'rgba(255,255,255,.35)',marginBottom:14}}>
-                    {r.desc}
-                  </div>
+                <div key={r.title} className="rp-download-card">
+                  <div className="rp-dl-icon">{r.icon}</div>
+                  <div className="rp-dl-title">{r.title}</div>
+                  <div className="rp-dl-desc">{r.desc}</div>
                   <button
-                    className="payslip-dl"
-                    style={{fontSize:12,padding:'6px 14px',cursor:'pointer',
-                      opacity: downloading===r.title ? 0.6 : 1}}
-                    disabled={downloading===r.title}
+                    className="rp-dl-btn"
+                    disabled={downloading === r.title}
                     onClick={() => handleDownload(r)}
                   >
-                    {downloading===r.title ? '⏳ Downloading…' : '⬇ Download CSV'}
+                    {downloading === r.title ? '⏳ Downloading…' : '⬇ Download CSV'}
                   </button>
                 </div>
               ))}
