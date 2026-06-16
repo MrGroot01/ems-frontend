@@ -29,15 +29,15 @@ export default function TaskWarningBanner({ notifications = [] }) {
   // =======================================================
   // STATE
   // =======================================================
-  const [overdueTasks,  setOverdueTasks]  = useState([]);
-  const [showBanner,    setShowBanner]    = useState(false);
-  const [dismissed,     setDismissed]     = useState(false);
-  const [meetingLink,   setMeetingLink]   = useState(null);
-  const [meetingTime,   setMeetingTime]   = useState(null); // JS Date
-  const [minutesAway,   setMinutesAway]   = useState(null);
-  const [secondsLeft,   setSecondsLeft]   = useState(null);
-  const [emailSent,     setEmailSent]     = useState(false);
-  const [checking,      setChecking]      = useState(false);
+  const [overdueTasks, setOverdueTasks] = useState([]);
+  const [showBanner,   setShowBanner]   = useState(false);
+  const [dismissed,    setDismissed]    = useState(false);
+  const [meetingLink,  setMeetingLink]  = useState(null);
+  const [meetingTime,  setMeetingTime]  = useState(null);
+  const [minutesAway,  setMinutesAway]  = useState(null);
+  const [secondsLeft,  setSecondsLeft]  = useState(null);
+  const [emailSent,    setEmailSent]    = useState(false);
+  const [checking,     setChecking]     = useState(false);
 
   // =======================================================
   // FETCH TASKS — detect overdue ones
@@ -69,19 +69,36 @@ export default function TaskWarningBanner({ notifications = [] }) {
             const r = await tasksAPI.checkOverdueMeeting();
             const d = r.data;
 
-            if (d.meeting_link) {
+            // ── Fresh meeting just created ──────────────────
+            if (d.meeting_scheduled && d.meeting_link) {
               setMeetingLink(d.meeting_link);
               if (d.meeting_time) setMeetingTime(new Date(d.meeting_time));
               if (d.minutes_away) setMinutesAway(d.minutes_away);
-              // Email was sent by backend if meeting_scheduled === true
-              if (d.meeting_scheduled) setEmailSent(true);
+              setEmailSent(true);
             }
+
+            // ── Meeting already scheduled earlier ───────────
+            // Return the existing link so user can still join
+            else if (d.reason === 'already_scheduled' && d.meeting_link) {
+              setMeetingLink(d.meeting_link);
+              setMeetingTime(null);  // no countdown for old meeting
+              setEmailSent(false);
+            }
+
+            // ── Fallback: link returned without meeting_scheduled flag ──
+            else if (d.meeting_link) {
+              setMeetingLink(d.meeting_link);
+              if (d.meeting_time) setMeetingTime(new Date(d.meeting_time));
+              if (d.minutes_away) setMinutesAway(d.minutes_away);
+            }
+
           } catch (err) {
             console.error('check_overdue_meeting error:', err);
           } finally {
             setChecking(false);
           }
         }
+
       } else if (overdue.length < 2) {
         setShowBanner(false);
         setDismissed(false);
@@ -160,8 +177,8 @@ export default function TaskWarningBanner({ notifications = [] }) {
   const priorityClass = (p) =>
     p === 'urgent' ? 'urgent' : p === 'high' ? 'high' : '';
 
-  const TIMER_MAX     = (minutesAway || 10) * 60;
-  const timerPercent  = secondsLeft !== null
+  const TIMER_MAX    = (minutesAway || 10) * 60;
+  const timerPercent = secondsLeft !== null
     ? Math.min(100, ((TIMER_MAX - secondsLeft) / TIMER_MAX) * 100)
     : 0;
 
@@ -199,8 +216,8 @@ export default function TaskWarningBanner({ notifications = [] }) {
             )}
           </p>
 
-          {/* Countdown */}
-          {secondsLeft !== null && (
+          {/* Countdown — only shown when we have a future meeting time */}
+          {secondsLeft !== null && meetingTime && (
             <div className="twb-timer" style={{ marginBottom: 14 }}>
               <div className="twb-timer-top">
                 <span>⏱ Meeting starts in:</span>
