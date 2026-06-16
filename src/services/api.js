@@ -57,26 +57,26 @@ export const authAPI = {
 
 // ── EMPLOYEES ─────────────────────────────────────────────────
 export const employeesAPI = {
-  getAll:         (params) => api.get('/employees/', { params }),
-  getById:        (id)     => api.get(`/employees/${id}/`),
-  create:         (data)   => api.post('/employees/', data),        // creates User + Employee
-  update:         (id, data) => api.patch(`/employees/${id}/`, data),
-  delete:         (id)     => api.delete(`/employees/${id}/`),
+  getAll:            (params) => api.get('/employees/', { params }),
+  getById:           (id)     => api.get(`/employees/${id}/`),
+  create:            (data)   => api.post('/employees/', data),
+  update:            (id, data) => api.patch(`/employees/${id}/`, data),
+  delete:            (id)     => api.delete(`/employees/${id}/`),
   getDashboardStats: () => api.get('/employees/dashboard-stats/'),
 };
 
-// ── ATTENDANCE ─────────────────────────────────────────────
+// ── ATTENDANCE ────────────────────────────────────────────────
 export const attendanceAPI = {
-  checkIn:          () => api.post('/attendance/check_in/'),
-  checkOut:         () => api.post('/attendance/check_out/'),
-  getMine:          (params) => api.get('/attendance/', { params }),
-  getAll:           (params) => api.get('/attendance/', { params }),
-  todaySummary:     () => api.get('/attendance/today_summary/'),
+  checkIn:      () => api.post('/attendance/check_in/'),
+  checkOut:     () => api.post('/attendance/check_out/'),
+  getMine:      (params) => api.get('/attendance/', { params }),
+  getAll:       (params) => api.get('/attendance/', { params }),
+  todaySummary: () => api.get('/attendance/today_summary/'),
 
-  // ── Face Recognition ──────────────────────────────────
-  faceStatus:       () => api.get('/attendance/face-status/'),
-  registerFace:     (image) => api.post('/attendance/register-face/', { image }),
-  faceCheckIn:      (image) => api.post('/attendance/face-checkin/', { image }),
+  // Face Recognition
+  faceStatus:   () => api.get('/attendance/face-status/'),
+  registerFace: (image) => api.post('/attendance/register-face/', { image }),
+  faceCheckIn:  (image) => api.post('/attendance/face-checkin/', { image }),
 };
 
 // ── LEAVES ────────────────────────────────────────────────────
@@ -95,6 +95,14 @@ export const tasksAPI = {
   update:         (id, data) => api.patch(`/tasks/${id}/`, data),
   updateProgress: (id, data) => api.patch(`/tasks/${id}/update_progress/`, data),
   delete:         (id)       => api.delete(`/tasks/${id}/`),
+
+  // ── NEW: auto overdue meeting check (called by TaskWarningBanner) ──
+  checkOverdueMeeting: () => api.post('/tasks/check_overdue_meeting/'),
+
+  // ── Admin only ────────────────────────────────────────────────
+  atRiskEmployees:    () => api.get('/tasks/at_risk_employees/'),
+  scheduleMeeting:    (data) => api.post('/tasks/schedule_meeting/', data),
+  triggerWarningCheck: () => api.post('/tasks/trigger_warning_check/'),
 };
 
 // ── PAYROLL ───────────────────────────────────────────────────
@@ -106,7 +114,6 @@ export const payrollAPI = {
   generatePayslip: (data) => api.post('/payroll/payslips/', data),
   markPaid:        (id)   => api.patch(`/payroll/payslips/${id}/mark_paid/`),
 };
- 
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
 export const notificationsAPI = {
@@ -116,23 +123,22 @@ export const notificationsAPI = {
   broadcast:   (data) => api.post('/notifications/broadcast/', data),
   unreadCount: () => api.get('/notifications/unread_count/'),
 };
-// ── COURSES ───────────────────────────────────────────────
-export const coursesAPI = {
-  getAll:          (params) => api.get('/learning/courses/', { params }),
-  getByDept:       (dept)   => api.get(`/learning/courses/by-department/?dept=${dept}`),
-  create:          (data)   => api.post('/learning/courses/', data),
-  update:          (id, data) => api.patch(`/learning/courses/${id}/`, data),
-  delete:          (id)     => api.delete(`/learning/courses/${id}/`),
-  enroll:          (id, data) => api.post(`/learning/courses/${id}/enroll/`, data),
 
-  getMyEnrollments: ()      => api.get('/learning/enrollments/'),
-  getAllEnrollments: ()      => api.get('/learning/enrollments/'),
-  getStats:         ()      => api.get('/learning/enrollments/stats/'),
-  completeLesson:  (id, lesson_index) =>
+// ── COURSES ───────────────────────────────────────────────────
+export const coursesAPI = {
+  getAll:           (params) => api.get('/learning/courses/', { params }),
+  getByDept:        (dept)   => api.get(`/learning/courses/by-department/?dept=${dept}`),
+  create:           (data)   => api.post('/learning/courses/', data),
+  update:           (id, data) => api.patch(`/learning/courses/${id}/`, data),
+  delete:           (id)     => api.delete(`/learning/courses/${id}/`),
+  enroll:           (id, data) => api.post(`/learning/courses/${id}/enroll/`, data),
+  getMyEnrollments: ()       => api.get('/learning/enrollments/'),
+  getAllEnrollments: ()       => api.get('/learning/enrollments/'),
+  getStats:         ()       => api.get('/learning/enrollments/stats/'),
+  completeLesson:   (id, lesson_index) =>
     api.post(`/learning/enrollments/${id}/complete-lesson/`, { lesson_index }),
-  submitQuiz:      (id, answers) =>
+  submitQuiz:       (id, answers) =>
     api.post(`/learning/enrollments/${id}/submit-quiz/`, { answers }),
 };
-
 
 export default api;

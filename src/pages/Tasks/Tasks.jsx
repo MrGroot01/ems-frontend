@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Sidebar from '../../components/Sidebar/Sidebar';
-import Navbar  from '../../components/Navbar/Navbar';
-import Modal   from '../../components/Modal/Modal';
-import { tasksAPI, authAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import Sidebar           from '../../components/Sidebar/Sidebar';
+import Navbar            from '../../components/Navbar/Navbar';
+import Modal             from '../../components/Modal/Modal';
+import TaskWarningBanner from '../../components/TaskWarningBanner/TaskWarningBanner';
+import { tasksAPI, authAPI, notificationsAPI } from '../../services/api';
+import { useAuth }       from '../../context/AuthContext';
 import '../AdminDashboard/AdminDashboard.css';
 import './Tasks.css';
 
-const STATUSES      = ['todo', 'in_progress', 'completed'];
-const STATUS_LABELS = { todo: 'Pending', in_progress: 'In Progress', completed: 'Completed' };
-const STATUS_ICONS  = { todo: '⏳', in_progress: '🔄', completed: '✅' };
-const PRIORITIES    = ['low', 'medium', 'high', 'urgent'];
-const PRIORITY_PILL = { low:'pill-gray', medium:'pill-blue', high:'pill-amber', urgent:'pill-red' };
-const PRIORITY_ICON = { low:'🟢', medium:'🟡', high:'🟠', urgent:'🔴' };
+const STATUSES       = ['todo', 'in_progress', 'completed'];
+const STATUS_LABELS  = { todo:'Pending', in_progress:'In Progress', completed:'Completed' };
+const STATUS_ICONS   = { todo:'⏳', in_progress:'🔄', completed:'✅' };
+const PRIORITIES     = ['low', 'medium', 'high', 'urgent'];
+const PRIORITY_PILL  = { low:'pill-gray', medium:'pill-blue', high:'pill-amber', urgent:'pill-red' };
+const PRIORITY_ICON  = { low:'🟢', medium:'🟡', high:'🟠', urgent:'🔴' };
 const PRIORITY_ORDER = { urgent:4, high:3, medium:2, low:1 };
 
 const COL_STYLE = {
@@ -27,8 +28,35 @@ const EMPTY_FORM = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// TaskForm is OUTSIDE Tasks so it never gets recreated on render
-// This is what fixes the "one character at a time" bug
+// Toast — fixed top-center, impossible to miss
+// ─────────────────────────────────────────────────────────────
+function Toast({ msg }) {
+  if (!msg) return null;
+  return (
+    <div style={{
+      position:'fixed', top:24, left:'50%', transform:'translateX(-50%)',
+      zIndex:99999, minWidth:300, maxWidth:520,
+      padding:'15px 24px',
+      background: msg.err
+        ? 'linear-gradient(135deg,#7f1d1d,#991b1b)'
+        : 'linear-gradient(135deg,#064e3b,#065f46)',
+      border: `1px solid ${msg.err ? 'rgba(239,68,68,.5)' : 'rgba(16,185,129,.5)'}`,
+      borderRadius:14,
+      boxShadow:'0 12px 40px rgba(0,0,0,.5)',
+      color:'#fff', fontSize:14, fontWeight:700,
+      display:'flex', alignItems:'center', gap:12,
+      animation:'toastIn .35s cubic-bezier(.34,1.56,.64,1)',
+      fontFamily:'Plus Jakarta Sans,sans-serif',
+      whiteSpace:'nowrap',
+    }}>
+      <span style={{fontSize:20, flexShrink:0}}>{msg.err ? '❌' : '✅'}</span>
+      {msg.text}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// TaskForm — defined outside Tasks so it never remounts
 // ─────────────────────────────────────────────────────────────
 function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAssignAll, users, isAdmin }) {
   return (
@@ -40,12 +68,10 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
         </div>
       )}
 
-      {/* Title */}
       <div className="field" style={{marginBottom:12}}>
         <label>Task Title *</label>
         <input
-          type="text"
-          placeholder="e.g. Fix login bug"
+          type="text" placeholder="e.g. Fix login bug"
           value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
           style={{ borderColor: formErrors.title ? 'rgba(239,68,68,.6)' : '' }}
@@ -53,18 +79,15 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
         {formErrors.title && <p className="field-err">{formErrors.title}</p>}
       </div>
 
-      {/* Description */}
       <div className="field" style={{marginBottom:12}}>
         <label>Description</label>
         <textarea
-          rows={3}
-          placeholder="Task details, requirements, notes…"
+          rows={3} placeholder="Task details, requirements, notes…"
           value={form.description}
           onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
         />
       </div>
 
-      {/* Assign All (only on create for admin) */}
       {!isEdit && isAdmin && (
         <div
           style={{
@@ -73,11 +96,11 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
             background: assignAll ? 'rgba(99,102,241,.15)' : 'rgba(255,255,255,.04)',
             border: assignAll ? '1px solid rgba(99,102,241,.4)' : '1px solid rgba(255,255,255,.08)',
           }}
-          onClick={() => { setAssignAll(p => !p); setForm(p => ({ ...p, assigned_to: '' })); }}
+          onClick={() => { setAssignAll(p => !p); setForm(p => ({ ...p, assigned_to:'' })); }}
         >
           <div style={{
-            width:22, height:22, borderRadius:6, display:'flex', alignItems:'center',
-            justifyContent:'center', fontSize:14, flexShrink:0, transition:'all .2s',
+            width:22,height:22,borderRadius:6,display:'flex',alignItems:'center',
+            justifyContent:'center',fontSize:14,flexShrink:0,transition:'all .2s',
             background: assignAll ? '#6366f1' : 'rgba(255,255,255,.1)',
             border: assignAll ? 'none' : '1px solid rgba(255,255,255,.2)',
           }}>
@@ -87,15 +110,12 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
             <div style={{color:'#e2e8f0',fontSize:13,fontWeight:600}}>
               👥 Assign to ALL Employees ({users.length})
             </div>
-            <div style={{color:'#94a3b8',fontSize:11}}>
-              Task will be created for every employee
-            </div>
+            <div style={{color:'#94a3b8',fontSize:11}}>Task will be created for every employee</div>
           </div>
         </div>
       )}
 
       <div className="two-col">
-        {/* Assign To */}
         {isAdmin && (
           <div className="field">
             <label>Assign To {!assignAll && !isEdit && '*'}</label>
@@ -103,10 +123,7 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
               value={form.assigned_to}
               onChange={e => setForm(p => ({ ...p, assigned_to: e.target.value }))}
               disabled={assignAll}
-              style={{
-                borderColor: formErrors.assigned_to ? 'rgba(239,68,68,.6)' : '',
-                opacity: assignAll ? 0.4 : 1,
-              }}
+              style={{ borderColor: formErrors.assigned_to ? 'rgba(239,68,68,.6)' : '', opacity: assignAll ? 0.4 : 1 }}
             >
               <option value="">{assignAll ? '— All selected —' : 'Select employee…'}</option>
               {users.map(u => (
@@ -119,48 +136,33 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
           </div>
         )}
 
-        {/* Priority */}
         <div className="field">
           <label>Priority</label>
-          <select
-            value={form.priority}
-            onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}
-          >
+          <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}>
             {PRIORITIES.map(p => (
-              <option key={p} value={p}>
-                {PRIORITY_ICON[p]} {p.charAt(0).toUpperCase() + p.slice(1)}
-              </option>
+              <option key={p} value={p}>{PRIORITY_ICON[p]} {p.charAt(0).toUpperCase()+p.slice(1)}</option>
             ))}
           </select>
         </div>
 
-        {/* Due Date */}
         <div className="field">
           <label>Due Date *</label>
           <input
-            type="date"
-            value={form.due_date}
+            type="date" value={form.due_date}
             onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))}
             style={{ borderColor: formErrors.due_date ? 'rgba(239,68,68,.6)' : '' }}
           />
           {formErrors.due_date && <p className="field-err">{formErrors.due_date}</p>}
         </div>
 
-        {/* Status */}
         <div className="field">
           <label>Status</label>
-          <select
-            value={form.status}
-            onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-          >
-            {STATUSES.map(s => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-            ))}
+          <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}>
+            {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Assign all preview */}
       {!isEdit && assignAll && users.length > 0 && (
         <div style={{padding:'12px 16px',borderRadius:10,marginTop:4,
           background:'rgba(99,102,241,.08)',border:'1px solid rgba(99,102,241,.2)'}}>
@@ -182,18 +184,17 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
 }
 
 // ─────────────────────────────────────────────────────────────
-// TaskCard is also outside Tasks for the same reason
+// TaskCard — defined outside Tasks so it never remounts
 // ─────────────────────────────────────────────────────────────
 function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatusChange, onProgressUpdate }) {
-  const isOverdue = (t) =>
-    t.status !== 'completed' && t.due_date && new Date(t.due_date) < new Date();
+  const isOverdue = t => t.status !== 'completed' && t.due_date && new Date(t.due_date) < new Date();
 
   const daysUntil = (due) => {
     const diff = Math.ceil((new Date(due) - new Date()) / 86400000);
-    if (diff < 0)   return { label: `${Math.abs(diff)}d overdue`, color: '#f87171' };
-    if (diff === 0) return { label: 'Due today',                  color: '#fbbf24' };
-    if (diff <= 2)  return { label: `Due in ${diff}d`,            color: '#fb923c' };
-    return { label: `Due in ${diff}d`, color: '#94a3b8' };
+    if (diff < 0)   return { label:`${Math.abs(diff)}d overdue`, color:'#f87171' };
+    if (diff === 0) return { label:'Due today',                  color:'#fbbf24' };
+    if (diff <= 2)  return { label:`Due in ${diff}d`,            color:'#fb923c' };
+    return               { label:`Due in ${diff}d`,              color:'#94a3b8' };
   };
 
   const overdue    = isOverdue(task);
@@ -201,11 +202,9 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
   const isUpdating = updatingId === task.id;
 
   return (
-    <div
-      className={`task-card ${overdue ? 'overdue' : ''} ${isUpdating ? 'updating' : ''}`}
-      style={{ opacity: isUpdating ? 0.7 : 1 }}
-    >
-      {/* Overdue banner */}
+    <div className={`task-card ${overdue?'overdue':''} ${isUpdating?'updating':''}`}
+      style={{ opacity: isUpdating ? 0.7 : 1 }}>
+
       {overdue && (
         <div style={{background:'rgba(239,68,68,.15)',borderRadius:6,padding:'4px 8px',
           fontSize:11,color:'#f87171',fontWeight:600,marginBottom:8,
@@ -214,26 +213,21 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
         </div>
       )}
 
-      {/* Title row */}
       <div className="task-card-head">
-        <div className="task-card-title"
-          style={{ cursor:'pointer', flex:1 }}
-          onClick={() => onView(task)}>
+        <div className="task-card-title" style={{cursor:'pointer',flex:1}} onClick={() => onView(task)}>
           {task.title}
         </div>
-        <span className={`pill ${PRIORITY_PILL[task.priority] || 'pill-gray'}`}>
+        <span className={`pill ${PRIORITY_PILL[task.priority]||'pill-gray'}`}>
           {PRIORITY_ICON[task.priority]} {task.priority}
         </span>
       </div>
 
-      {/* Description */}
       {task.description && (
         <div className="task-card-desc">
-          {task.description.slice(0, 90)}{task.description.length > 90 ? '…' : ''}
+          {task.description.slice(0,90)}{task.description.length>90?'…':''}
         </div>
       )}
 
-      {/* Due date */}
       {dueInfo && (
         <div style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,
           padding:'3px 8px',borderRadius:6,marginBottom:8,fontWeight:500,
@@ -242,41 +236,34 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
         </div>
       )}
 
-      {/* Progress bar */}
       <div className="task-prog-row">
         <div className="task-prog-bar">
           <div className="task-prog-fill" style={{
-            width: `${task.progress || 0}%`,
-            background: task.status === 'completed' ? '#10b981'
-              : task.progress > 60 ? '#6366f1' : '#f59e0b',
+            width:`${task.progress||0}%`,
+            background: task.status==='completed'?'#10b981':task.progress>60?'#6366f1':'#f59e0b',
           }}/>
         </div>
-        <span className="task-prog-val">{task.progress || 0}%</span>
+        <span className="task-prog-val">{task.progress||0}%</span>
       </div>
 
-      {/* Slider — employees only */}
       {!isAdmin && task.status !== 'completed' && (
-        <input
-          type="range" className="progress-slider"
-          min={0} max={100} step={5}
-          value={task.progress || 0}
+        <input type="range" className="progress-slider"
+          min={0} max={100} step={5} value={task.progress||0}
           onChange={e => onProgressUpdate(task.id, Number(e.target.value))}
         />
       )}
 
-      {/* Status pills — quick change for admin */}
       {isAdmin && (
         <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
           {STATUSES.map(s => (
-            <button key={s}
-              onClick={() => task.status !== s && onStatusChange(task, s)}
+            <button key={s} onClick={() => task.status !== s && onStatusChange(task, s)}
               style={{
-                padding:'3px 10px', borderRadius:20, border:'none', cursor:'pointer',
-                fontSize:11, fontWeight:600, fontFamily:'inherit', transition:'all .15s',
-                background: task.status === s
+                padding:'3px 10px',borderRadius:20,border:'none',cursor:'pointer',
+                fontSize:11,fontWeight:600,fontFamily:'inherit',transition:'all .15s',
+                background: task.status===s
                   ? s==='todo'?'rgba(245,158,11,.3)':s==='in_progress'?'rgba(99,102,241,.3)':'rgba(16,185,129,.3)'
                   : 'rgba(255,255,255,.06)',
-                color: task.status === s
+                color: task.status===s
                   ? s==='todo'?'#fbbf24':s==='in_progress'?'#a5b4fc':'#6ee7b7'
                   : 'rgba(255,255,255,.3)',
               }}>
@@ -286,26 +273,21 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
         </div>
       )}
 
-      {/* Footer */}
       <div className="task-card-footer">
         <div className="task-assignee">
           <div style={{width:22,height:22,borderRadius:6,background:'rgba(99,102,241,.3)',
             display:'flex',alignItems:'center',justifyContent:'center',
             fontSize:10,fontWeight:700,color:'#a5b4fc',flexShrink:0}}>
-            {(task.assigned_to_name || '?').charAt(0).toUpperCase()}
+            {(task.assigned_to_name||'?').charAt(0).toUpperCase()}
           </div>
           <span style={{fontSize:12,color:'#94a3b8'}}>
-            {isAdmin ? task.assigned_to_name || '—' : `By: ${task.assigned_by_name || 'Admin'}`}
+            {isAdmin ? task.assigned_to_name||'—' : `By: ${task.assigned_by_name||'Admin'}`}
           </span>
         </div>
         <div style={{display:'flex',gap:6}}>
-          <button className="act-btn info" title="View" onClick={() => onView(task)}>👁️</button>
-          {isAdmin && (
-            <button className="act-btn edit" title="Edit" onClick={() => onEdit(task)}>✏️</button>
-          )}
-          {isAdmin && (
-            <button className="act-btn danger" title="Delete" onClick={() => onDelete(task.id)}>🗑️</button>
-          )}
+          <button className="act-btn info"   title="View"   onClick={() => onView(task)}>👁️</button>
+          {isAdmin && <button className="act-btn edit"   title="Edit"   onClick={() => onEdit(task)}>✏️</button>}
+          {isAdmin && <button className="act-btn danger" title="Delete" onClick={() => onDelete(task.id)}>🗑️</button>}
         </div>
       </div>
     </div>
@@ -313,45 +295,47 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
 }
 
 // ─────────────────────────────────────────────────────────────
-// Main Tasks component
+// Main Tasks page
 // ─────────────────────────────────────────────────────────────
 export default function Tasks() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
 
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [tasks,       setTasks]       = useState([]);
-  const [users,       setUsers]       = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [showCreate,  setShowCreate]  = useState(false);
-  const [showEdit,    setShowEdit]    = useState(false);
-  const [showDetail,  setShowDetail]  = useState(false);
-  const [activeTask,  setActiveTask]  = useState(null);
-  const [saving,      setSaving]      = useState(false);
-  const [saveErr,     setSaveErr]     = useState('');
-  const [successMsg,  setSuccessMsg]  = useState('');
-  const [assignAll,   setAssignAll]   = useState(false);
-  const [search,      setSearch]      = useState('');
-  const [filterPri,   setFilterPri]   = useState('');
-  const [sortBy,      setSortBy]      = useState('created');
-  const [sortOrder,   setSortOrder]   = useState('desc');
-  const [updatingId,  setUpdatingId]  = useState(null);
-  const [form,        setForm]        = useState(EMPTY_FORM);
-  const [formErrors,  setFormErrors]  = useState({});
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [tasks,         setTasks]         = useState([]);
+  const [users,         setUsers]         = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [showCreate,    setShowCreate]    = useState(false);
+  const [showEdit,      setShowEdit]      = useState(false);
+  const [showDetail,    setShowDetail]    = useState(false);
+  const [activeTask,    setActiveTask]    = useState(null);
+  const [saving,        setSaving]        = useState(false);
+  const [saveErr,       setSaveErr]       = useState('');
+  const [toast,         setToast]         = useState(null);
+  const [assignAll,     setAssignAll]     = useState(false);
+  const [search,        setSearch]        = useState('');
+  const [filterPri,     setFilterPri]     = useState('');
+  const [sortBy,        setSortBy]        = useState('created');
+  const [sortOrder,     setSortOrder]     = useState('desc');
+  const [updatingId,    setUpdatingId]    = useState(null);
+  const [form,          setForm]          = useState(EMPTY_FORM);
+  const [formErrors,    setFormErrors]    = useState({});
 
   useEffect(() => {
     fetchTasks();
+    fetchNotifications();
     if (isAdmin()) fetchUsers();
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(fetchTasks, 30000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchTasks, 30000);
+    return () => clearInterval(iv);
   }, []);
 
   const fetchTasks = async () => {
     try {
       const res  = isAdmin() ? await tasksAPI.getAll() : await tasksAPI.getMine();
-      const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+      const data = Array.isArray(res.data) ? res.data : (res.data.results||[]);
       setTasks(data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -360,8 +344,16 @@ export default function Tasks() {
   const fetchUsers = async () => {
     try {
       const res  = await authAPI.getUsers();
-      const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+      const data = Array.isArray(res.data) ? res.data : (res.data.results||[]);
       setUsers(data.filter(u => u.role === 'employee'));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const res  = await notificationsAPI.getAll();
+      const data = Array.isArray(res.data) ? res.data : (res.data.results||[]);
+      setNotifications(data);
     } catch (e) { console.error(e); }
   };
 
@@ -377,7 +369,7 @@ export default function Tasks() {
       if (sortBy === 'priority')      { va = PRIORITY_ORDER[a.priority]||0; vb = PRIORITY_ORDER[b.priority]||0; }
       else if (sortBy === 'due_date') { va = new Date(a.due_date); vb = new Date(b.due_date); }
       else { va = new Date(a.created_at||0); vb = new Date(b.created_at||0); }
-      return sortOrder === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+      return sortOrder === 'asc' ? (va>vb?1:-1) : (va<vb?1:-1);
     });
   }, [tasks, search, filterPri, sortBy, sortOrder]);
 
@@ -389,25 +381,79 @@ export default function Tasks() {
     return errs;
   };
 
+  // ── CREATE — handles backend partial success ──────────────
   const handleCreate = async () => {
     const errs = validate();
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setSaving(true); setSaveErr('');
+
     try {
       if (assignAll && users.length > 0) {
-        await Promise.all(users.map(u => tasksAPI.create({ ...form, assigned_to: u.id })));
-        showToast(`✅ Task assigned to all ${users.length} employees!`);
+        const results   = await Promise.allSettled(
+          users.map(u => tasksAPI.create({ ...form, assigned_to: u.id }))
+        );
+        const succeeded = results.filter(r => r.status === 'fulfilled').length;
+        const failed    = results.filter(r => r.status === 'rejected').length;
+        setShowCreate(false); resetForm(); await fetchTasks();
+        showToast(
+          failed === 0
+            ? `Task assigned to all ${succeeded} employees!`
+            : `Assigned to ${succeeded} employees (${failed} failed)`
+        );
       } else {
         await tasksAPI.create(form);
-        showToast('✅ Task assigned successfully!');
+        setShowCreate(false); resetForm(); await fetchTasks();
+        showToast('Task assigned successfully!');
       }
-      setShowCreate(false); resetForm(); fetchTasks();
     } catch (e) {
-      const data = e.response?.data;
-      setSaveErr(typeof data === 'object' ? Object.values(data).flat().join(' | ') : 'Failed to create task.');
-    } finally { setSaving(false); }
+      // Backend returned an error — but the task MAY have been created
+      // (notification threw after the task saved). Re-fetch to check.
+      const statusCode = e.response?.status;
+
+      if (!statusCode || statusCode >= 500) {
+        // Server-side error — verify task was actually created
+        try {
+          await fetchTasks();
+          // Give state a moment to update then check
+          setTimeout(() => {
+            setTasks(prev => {
+              const found = prev.find(t =>
+                t.title === form.title &&
+                String(t.assigned_to) === String(form.assigned_to)
+              );
+              if (found) {
+                setShowCreate(false);
+                resetForm();
+                setSaving(false);
+                showToast('Task assigned successfully!');
+              } else {
+                setSaveErr('Failed to create task. Please try again.');
+                setSaving(false);
+              }
+              return prev;
+            });
+          }, 600);
+          return; // exit early — setSaving handled in setTimeout
+        } catch {
+          setSaveErr('Failed to create task. Please try again.');
+        }
+      } else {
+        // 4xx — real validation error from backend
+        const data = e.response?.data;
+        if (data && typeof data === 'object') {
+          const msgs = Object.entries(data)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+            .join(' | ');
+          setSaveErr(msgs);
+        } else {
+          setSaveErr('Failed to create task. Please try again.');
+        }
+      }
+    }
+    setSaving(false);
   };
 
+  // ── EDIT ─────────────────────────────────────────────────
   const openEdit = (task) => {
     setActiveTask(task);
     setForm({
@@ -431,10 +477,10 @@ export default function Tasks() {
     try {
       await tasksAPI.update(activeTask.id, form);
       setShowEdit(false); resetForm(); setActiveTask(null);
-      showToast('✅ Task updated!');
+      showToast('Task updated successfully!');
       fetchTasks();
-    } catch (e) {
-      setSaveErr('Failed to update task.');
+    } catch {
+      setSaveErr('Failed to update task. Please try again.');
     } finally { setSaving(false); }
   };
 
@@ -442,22 +488,17 @@ export default function Tasks() {
     setUpdatingId(task.id);
     try {
       await tasksAPI.update(task.id, { status: newStatus });
-      setTasks(prev => prev.map(t =>
-        t.id === task.id ? { ...t, status: newStatus } : t
-      ));
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
       showToast(`Task moved to ${STATUS_LABELS[newStatus]}`);
     } catch { showToast('Update failed', true); }
-    finally { setUpdatingId(null); }
+    finally  { setUpdatingId(null); }
   };
 
   const handleProgressUpdate = async (id, progress) => {
-    const newStatus = progress === 100 ? 'completed' : progress > 0 ? 'in_progress' : 'todo';
-    setTasks(prev => prev.map(t =>
-      t.id === id ? { ...t, progress, status: newStatus } : t
-    ));
-    try {
-      await tasksAPI.updateProgress(id, { progress, status: newStatus });
-    } catch { fetchTasks(); }
+    const newStatus = progress===100?'completed':progress>0?'in_progress':'todo';
+    setTasks(prev => prev.map(t => t.id===id ? { ...t, progress, status:newStatus } : t));
+    try { await tasksAPI.updateProgress(id, { progress, status:newStatus }); }
+    catch { fetchTasks(); }
   };
 
   const handleDelete = async (id) => {
@@ -466,23 +507,22 @@ export default function Tasks() {
     try {
       await tasksAPI.delete(id);
       setTasks(prev => prev.filter(t => t.id !== id));
-      showToast('🗑️ Task deleted');
+      showToast('Task deleted');
     } catch { showToast('Delete failed', true); }
-    finally { setUpdatingId(null); }
+    finally  { setUpdatingId(null); }
   };
 
   const resetForm = () => {
     setForm(EMPTY_FORM); setFormErrors({}); setSaveErr(''); setAssignAll(false);
   };
 
-  const showToast = (msg, isErr = false) => {
-    setSuccessMsg({ text: msg, err: isErr });
-    setTimeout(() => setSuccessMsg(''), 3500);
+  const showToast = (text, err = false) => {
+    setToast({ text, err });
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const isOverdue = (task) =>
-    task.status !== 'completed' &&
-    task.due_date && new Date(task.due_date) < new Date();
+  const isOverdue = t =>
+    t.status !== 'completed' && t.due_date && new Date(t.due_date) < new Date();
 
   const stats = {
     total:      tasks.length,
@@ -492,13 +532,13 @@ export default function Tasks() {
     overdue:    tasks.filter(t => isOverdue(t)).length,
   };
 
-  // Stable callbacks passed down to TaskCard (avoids unnecessary re-renders)
-  const handleView = useCallback((task) => { setActiveTask(task); setShowDetail(true); }, []);
+  const handleView    = useCallback((task) => { setActiveTask(task); setShowDetail(true); }, []);
   const handleEdit_cb = useCallback((task) => openEdit(task), [users]);
 
   return (
     <div className="dash-layout">
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)}/>
+
       <div className="dash-main">
         <Navbar
           title="Tasks"
@@ -509,30 +549,28 @@ export default function Tasks() {
         <div className="dash-content">
 
           {/* Toast */}
-          {successMsg && (
-            <div style={{
-              background: successMsg.err ? 'rgba(239,68,68,.12)' : 'rgba(16,185,129,.12)',
-              border: `1px solid ${successMsg.err ? 'rgba(239,68,68,.3)' : 'rgba(16,185,129,.3)'}`,
-              borderRadius:12, padding:'12px 18px',
-              color: successMsg.err ? '#f87171' : '#34d399',
-              fontSize:14, fontWeight:600, marginBottom:20,
-            }}>
-              {successMsg.text}
-            </div>
+          <Toast msg={toast}/>
+
+          {/* TaskWarningBanner — employees only */}
+          {!isAdmin() && (
+            <TaskWarningBanner notifications={notifications}/>
           )}
 
-          {/* Stats row */}
+          {/* Stats */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',
             gap:12,marginBottom:24}}>
             {[
-              { label:'Total',       value: stats.total,      color:'#818cf8', icon:'📋' },
-              { label:'Pending',     value: stats.pending,    color:'#f59e0b', icon:'⏳' },
-              { label:'In Progress', value: stats.inProgress, color:'#6366f1', icon:'🔄' },
-              { label:'Completed',   value: stats.completed,  color:'#10b981', icon:'✅' },
-              { label:'Overdue',     value: stats.overdue,    color:'#ef4444', icon:'🚨' },
+              { label:'Total',       value:stats.total,      color:'#818cf8', icon:'📋' },
+              { label:'Pending',     value:stats.pending,    color:'#f59e0b', icon:'⏳' },
+              { label:'In Progress', value:stats.inProgress, color:'#6366f1', icon:'🔄' },
+              { label:'Completed',   value:stats.completed,  color:'#10b981', icon:'✅' },
+              { label:'Overdue',     value:stats.overdue,    color:'#ef4444', icon:'🚨', hi:stats.overdue>0 },
             ].map(s => (
-              <div key={s.label} className="section-card"
-                style={{padding:'16px 18px',display:'flex',alignItems:'center',gap:12}}>
+              <div key={s.label} className="section-card" style={{
+                padding:'16px 18px', display:'flex', alignItems:'center', gap:12,
+                border:  s.hi ? '1px solid rgba(239,68,68,.4)' : '',
+                background: s.hi ? 'rgba(239,68,68,.06)' : '',
+              }}>
                 <span style={{fontSize:22}}>{s.icon}</span>
                 <div>
                   <div style={{fontSize:22,fontWeight:800,color:s.color,lineHeight:1}}>{s.value}</div>
@@ -542,7 +580,23 @@ export default function Tasks() {
             ))}
           </div>
 
-          {/* Controls bar */}
+          {/* Admin overdue alert */}
+          {isAdmin() && stats.overdue > 0 && (
+            <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 18px',
+              marginBottom:20,background:'rgba(239,68,68,.08)',
+              border:'1px solid rgba(239,68,68,.25)',borderRadius:12,fontSize:13,color:'#fca5a5'}}>
+              <span style={{fontSize:20}}>🚨</span>
+              <div>
+                <strong style={{color:'#f87171'}}>
+                  {stats.overdue} overdue task{stats.overdue>1?'s':''}
+                </strong>
+                {' '}— employees with 2+ overdue tasks will automatically receive a meeting
+                notification and email with a Jitsi link when they log in.
+              </div>
+            </div>
+          )}
+
+          {/* Controls */}
           <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap',alignItems:'center'}}>
             <div style={{flex:1,minWidth:200,position:'relative'}}>
               <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',
@@ -574,11 +628,11 @@ export default function Tasks() {
               <option value="due_date">⏰ Due Date</option>
             </select>
 
-            <button onClick={() => setSortOrder(o => o === 'asc' ? 'desc' : 'asc')}
+            <button onClick={() => setSortOrder(o => o==='asc'?'desc':'asc')}
               style={{padding:'9px 12px',background:'rgba(255,255,255,.05)',
                 border:'1px solid rgba(255,255,255,.1)',borderRadius:10,
                 color:'#e8eaf2',cursor:'pointer',fontSize:14}}>
-              {sortOrder === 'asc' ? '⬆️' : '⬇️'}
+              {sortOrder==='asc'?'⬆️':'⬇️'}
             </button>
 
             <button onClick={fetchTasks}
@@ -599,9 +653,7 @@ export default function Tasks() {
           {/* Board */}
           {loading ? (
             <div className="tasks-board">
-              {STATUSES.map(s =>
-                <div key={s} className="skeleton" style={{height:300,borderRadius:16}}/>
-              )}
+              {STATUSES.map(s => <div key={s} className="skeleton" style={{height:300,borderRadius:16}}/>)}
             </div>
           ) : (
             <div className="tasks-board">
@@ -612,7 +664,6 @@ export default function Tasks() {
                   <div key={status} className="task-col"
                     style={{background:col.bg,border:`1px solid ${col.border}`,
                       borderRadius:16,padding:16,display:'flex',flexDirection:'column',gap:0}}>
-
                     <div style={{display:'flex',alignItems:'center',
                       justifyContent:'space-between',marginBottom:14}}>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -637,14 +688,10 @@ export default function Tasks() {
                       ) : (
                         items.map(t => (
                           <TaskCard
-                            key={t.id}
-                            task={t}
-                            isAdmin={isAdmin()}
-                            updatingId={updatingId}
-                            onView={handleView}
-                            onEdit={handleEdit_cb}
-                            onDelete={handleDelete}
-                            onStatusChange={handleStatusChange}
+                            key={t.id} task={t}
+                            isAdmin={isAdmin()} updatingId={updatingId}
+                            onView={handleView} onEdit={handleEdit_cb}
+                            onDelete={handleDelete} onStatusChange={handleStatusChange}
                             onProgressUpdate={handleProgressUpdate}
                           />
                         ))
@@ -665,45 +712,27 @@ export default function Tasks() {
           <button className="btn-ghost" onClick={() => setShowCreate(false)}>Cancel</button>
           <button className="btn-primary" onClick={handleCreate} disabled={saving}>
             {saving
-              ? <><div className="spin"/>{assignAll ? `Assigning to ${users.length}…` : 'Saving…'}</>
-              : assignAll ? `🚀 Assign to All ${users.length}` : '🚀 Assign Task'}
+              ? <><div className="spin"/>{assignAll?`Assigning to ${users.length}…`:'Saving…'}</>
+              : assignAll?`🚀 Assign to All ${users.length}`:'🚀 Assign Task'}
           </button>
         </>}>
-        <TaskForm
-          form={form}
-          setForm={setForm}
-          formErrors={formErrors}
-          saveErr={saveErr}
-          isEdit={false}
-          assignAll={assignAll}
-          setAssignAll={setAssignAll}
-          users={users}
-          isAdmin={isAdmin()}
-        />
+        <TaskForm form={form} setForm={setForm} formErrors={formErrors} saveErr={saveErr}
+          isEdit={false} assignAll={assignAll} setAssignAll={setAssignAll}
+          users={users} isAdmin={isAdmin()}/>
       </Modal>
 
       {/* EDIT MODAL */}
       <Modal open={showEdit} onClose={() => { setShowEdit(false); resetForm(); }}
         title="✏️ Edit Task" width="600px"
         footer={<>
-          <button className="btn-ghost" onClick={() => { setShowEdit(false); resetForm(); }}>
-            Cancel
-          </button>
+          <button className="btn-ghost" onClick={() => { setShowEdit(false); resetForm(); }}>Cancel</button>
           <button className="btn-primary" onClick={handleEdit} disabled={saving}>
-            {saving ? <><div className="spin"/>Saving…</> : '💾 Save Changes'}
+            {saving?<><div className="spin"/>Saving…</>:'💾 Save Changes'}
           </button>
         </>}>
-        <TaskForm
-          form={form}
-          setForm={setForm}
-          formErrors={formErrors}
-          saveErr={saveErr}
-          isEdit={true}
-          assignAll={assignAll}
-          setAssignAll={setAssignAll}
-          users={users}
-          isAdmin={isAdmin()}
-        />
+        <TaskForm form={form} setForm={setForm} formErrors={formErrors} saveErr={saveErr}
+          isEdit={true} assignAll={assignAll} setAssignAll={setAssignAll}
+          users={users} isAdmin={isAdmin()}/>
       </Modal>
 
       {/* DETAIL MODAL */}
@@ -711,12 +740,9 @@ export default function Tasks() {
         onClose={() => { setShowDetail(false); setActiveTask(null); }}
         title="📋 Task Details" width="480px"
         footer={<>
-          <button className="btn-ghost" onClick={() => { setShowDetail(false); setActiveTask(null); }}>
-            Close
-          </button>
+          <button className="btn-ghost" onClick={() => { setShowDetail(false); setActiveTask(null); }}>Close</button>
           {isAdmin() && activeTask && (
-            <button className="btn-primary"
-              onClick={() => { setShowDetail(false); openEdit(activeTask); }}>
+            <button className="btn-primary" onClick={() => { setShowDetail(false); openEdit(activeTask); }}>
               ✏️ Edit Task
             </button>
           )}
@@ -732,14 +758,13 @@ export default function Tasks() {
                   {PRIORITY_ICON[activeTask.priority]} {activeTask.priority}
                 </span>
                 <span style={{fontSize:12,padding:'3px 10px',borderRadius:20,
-                  background: activeTask.status==='completed'?'rgba(16,185,129,.2)':
+                  background:activeTask.status==='completed'?'rgba(16,185,129,.2)':
                     activeTask.status==='in_progress'?'rgba(99,102,241,.2)':'rgba(245,158,11,.2)',
-                  color: activeTask.status==='completed'?'#6ee7b7':
+                  color:activeTask.status==='completed'?'#6ee7b7':
                     activeTask.status==='in_progress'?'#a5b4fc':'#fcd34d'}}>
                   {STATUS_ICONS[activeTask.status]} {STATUS_LABELS[activeTask.status]}
                 </span>
-                {activeTask.status !== 'completed' && activeTask.due_date &&
-                  new Date(activeTask.due_date) < new Date() && (
+                {isOverdue(activeTask) && (
                   <span style={{fontSize:12,padding:'3px 10px',borderRadius:20,
                     background:'rgba(239,68,68,.2)',color:'#f87171'}}>
                     🚨 Overdue
@@ -756,22 +781,17 @@ export default function Tasks() {
             )}
 
             {[
-              { label:'Assigned To', value: activeTask.assigned_to_name || '—', icon:'👤' },
-              { label:'Due Date',    value: activeTask.due_date || '—',          icon:'📅' },
-              { label:'Progress',    value: `${activeTask.progress||0}%`,        icon:'📊' },
-              { label:'Created',     value: activeTask.created_at
-                ? new Date(activeTask.created_at).toLocaleDateString() : '—',   icon:'🕒' },
+              { label:'Assigned To', value:activeTask.assigned_to_name||'—', icon:'👤' },
+              { label:'Due Date',    value:activeTask.due_date||'—',          icon:'📅' },
+              { label:'Progress',    value:`${activeTask.progress||0}%`,      icon:'📊' },
+              { label:'Created',     value:activeTask.created_at
+                ? new Date(activeTask.created_at).toLocaleDateString():'—',  icon:'🕒' },
             ].map(row => (
               <div key={row.label} style={{display:'flex',justifyContent:'space-between',
                 alignItems:'center',padding:'10px 14px',
-                background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',
-                borderRadius:10}}>
-                <span style={{fontSize:13,color:'#6b7280',display:'flex',gap:8}}>
-                  {row.icon} {row.label}
-                </span>
-                <span style={{fontSize:13,color:'#e8eaf2',fontWeight:500}}>
-                  {row.value}
-                </span>
+                background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:10}}>
+                <span style={{fontSize:13,color:'#6b7280',display:'flex',gap:8}}>{row.icon} {row.label}</span>
+                <span style={{fontSize:13,color:'#e8eaf2',fontWeight:500}}>{row.value}</span>
               </div>
             ))}
 
@@ -782,10 +802,8 @@ export default function Tasks() {
                 <span style={{fontWeight:700,color:'#e8eaf2'}}>{activeTask.progress||0}%</span>
               </div>
               <div style={{height:8,background:'rgba(255,255,255,.08)',borderRadius:4,overflow:'hidden'}}>
-                <div style={{height:'100%',borderRadius:4,
-                  width:`${activeTask.progress||0}%`,
-                  background:activeTask.status==='completed'?'#10b981':'#6366f1',
-                  transition:'width .3s'}}/>
+                <div style={{height:'100%',borderRadius:4,width:`${activeTask.progress||0}%`,
+                  background:activeTask.status==='completed'?'#10b981':'#6366f1',transition:'width .3s'}}/>
               </div>
             </div>
           </div>

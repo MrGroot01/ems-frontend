@@ -11,78 +11,46 @@
     rgba(245, 158, 11, 0.15),
     rgba(239, 68, 68, 0.10)
   );
-
   border: 1px solid rgba(245, 158, 11, 0.35);
-
   border-radius: 18px;
-
   padding: 20px 24px;
-
   margin-bottom: 24px;
-
   display: flex;
-
   align-items: flex-start;
-
   gap: 18px;
-
   font-family: 'Plus Jakarta Sans', sans-serif;
-
   animation: bannerSlide 0.4s ease;
-
   position: relative;
-
   overflow: hidden;
 }
 
-/* =========================================================
-   SLIDE ANIMATION
-========================================================= */
 @keyframes bannerSlide {
-
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================================
    WARNING ICON
 ========================================================= */
 .twb-icon {
-
   font-size: 34px;
-
   flex-shrink: 0;
-
   margin-top: 2px;
 }
 
 /* =========================================================
    BODY
 ========================================================= */
-.twb-body {
-  flex: 1;
-}
+.twb-body { flex: 1; }
 
 /* =========================================================
    TITLE
 ========================================================= */
 .twb-title {
-
   font-size: 17px;
-
   font-weight: 800;
-
   color: #fbbf24;
-
   margin-bottom: 8px;
-
   letter-spacing: -0.2px;
 }
 
@@ -91,292 +59,187 @@
 ========================================================= */
 .twb-message,
 .twb-msg {
-
   font-size: 13px;
-
   color: rgba(255, 255, 255, 0.72);
-
   line-height: 1.7;
-
   margin-bottom: 14px;
+}
+
+/* inline "scheduling..." indicator */
+.twb-checking {
+  color: #a5b4fc;
+  font-style: italic;
 }
 
 /* =========================================================
    TASK PILLS
 ========================================================= */
 .twb-tasks {
-
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 8px;
-
   margin-bottom: 16px;
 }
 
 .twb-task-pill {
-
   display: flex;
-
   align-items: center;
-
   gap: 6px;
-
   padding: 6px 12px;
-
   border-radius: 999px;
-
   font-size: 12px;
-
   font-weight: 700;
-
   background: rgba(245, 158, 11, 0.12);
-
   border: 1px solid rgba(245, 158, 11, 0.25);
-
   color: #fbbf24;
-
   white-space: nowrap;
 }
 
-/* Urgent */
 .twb-task-pill.urgent {
-
   background: rgba(239, 68, 68, 0.12);
-
   border-color: rgba(239, 68, 68, 0.25);
-
   color: #f87171;
 }
 
-/* High */
 .twb-task-pill.high {
-
   background: rgba(245, 158, 11, 0.12);
-
   border-color: rgba(245, 158, 11, 0.25);
-
   color: #fbbf24;
 }
 
 /* =========================================================
    TIMER
 ========================================================= */
-.twb-timer {
-
-  margin-top: 10px;
-}
+.twb-timer { margin-top: 10px; }
 
 .twb-timer-top {
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   margin-bottom: 6px;
-
   font-size: 12px;
-
   color: rgba(255, 255, 255, 0.65);
 }
 
 .twb-timer-bar {
-
   width: 100%;
-
   height: 6px;
-
   background: rgba(255, 255, 255, 0.10);
-
   border-radius: 999px;
-
   overflow: hidden;
 }
 
 .twb-timer-fill {
-
   height: 100%;
-
-  background: linear-gradient(
-    90deg,
-    #f59e0b,
-    #ef4444
-  );
-
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
   border-radius: 999px;
-
   transition: width 1s linear;
-}
-
-/* =========================================================
-   TIME UP TEXT
-========================================================= */
-.twb-timeup {
-
-  margin-top: 12px;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  color: #f87171;
 }
 
 /* =========================================================
    ACTION BUTTONS
 ========================================================= */
 .twb-actions {
-
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 12px;
-
   margin-top: 16px;
 }
 
-/* =========================================================
-   BUTTON
-========================================================= */
 .twb-btn {
-
   border: none;
-
   outline: none;
-
   cursor: pointer;
-
   text-decoration: none;
-
   display: inline-flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 6px;
-
   padding: 10px 18px;
-
   border-radius: 12px;
-
   font-size: 13px;
-
   font-weight: 700;
-
   transition: all 0.25s ease;
-
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* =========================================================
-   PRIMARY BUTTON
-========================================================= */
 .twb-btn.primary {
-
-  background: linear-gradient(
-    135deg,
-    #f59e0b,
-    #d97706
-  );
-
-  color: #ffffff;
-
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
   box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
 }
-
 .twb-btn.primary:hover {
-
   transform: translateY(-2px);
-
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.50);
 }
 
-/* =========================================================
-   SECONDARY BUTTON
-========================================================= */
 .twb-btn.secondary {
-
   background: rgba(255, 255, 255, 0.08);
-
   border: 1px solid rgba(255, 255, 255, 0.12);
-
   color: rgba(255, 255, 255, 0.72);
 }
-
 .twb-btn.secondary:hover {
-
   background: rgba(255, 255, 255, 0.14);
-
-  color: #ffffff;
+  color: #fff;
 }
 
 /* =========================================================
-   MEETING NOTIFICATION
+   MEETING NOTIFICATION CARD
 ========================================================= */
 .meeting-notification {
-
   background: linear-gradient(
     135deg,
     rgba(99, 102, 241, 0.15),
     rgba(139, 92, 246, 0.10)
   );
-
   border: 1px solid rgba(99, 102, 241, 0.30);
-
   border-radius: 18px;
-
   padding: 22px 24px;
-
   margin-bottom: 24px;
-
   animation: bannerSlide 0.4s ease;
-
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* =========================================================
-   MEETING HEADER
-========================================================= */
 .meeting-notification-head {
-
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
-.meeting-icon {
-  font-size: 30px;
-}
+.meeting-icon { font-size: 30px; }
 
 .meeting-notification-title {
-
   font-size: 17px;
-
   font-weight: 800;
-
   color: #a5b4fc;
+}
+
+/* =========================================================
+   EMAIL SENT BADGE
+========================================================= */
+.meeting-email-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.30);
+  color: #a5b4fc;
+  vertical-align: middle;
 }
 
 /* =========================================================
    MEETING DESCRIPTION
 ========================================================= */
 .meeting-description {
-
   font-size: 13px;
-
   line-height: 1.7;
-
   color: rgba(255, 255, 255, 0.72);
-
   margin-bottom: 14px;
 }
 
@@ -384,82 +247,44 @@
    MEETING LINK BOX
 ========================================================= */
 .meeting-link-box {
-
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
   flex-wrap: wrap;
-
   padding: 16px 18px;
-
   border-radius: 14px;
-
   background: rgba(99, 102, 241, 0.10);
-
   border: 1px solid rgba(99, 102, 241, 0.20);
+  margin-bottom: 12px;
 }
 
-.video-icon {
-  font-size: 20px;
-}
+.video-icon { font-size: 20px; }
 
-/* =========================================================
-   MEETING LINK TEXT
-========================================================= */
 .meeting-link-text {
-
   flex: 1;
-
   font-size: 13px;
-
   font-weight: 700;
-
   color: #818cf8;
-
   word-break: break-all;
 }
 
-/* =========================================================
-   JOIN BUTTON
-========================================================= */
 .meeting-join-btn {
-
   text-decoration: none;
-
   display: inline-flex;
-
   align-items: center;
-
   gap: 6px;
-
   padding: 10px 18px;
-
   border-radius: 12px;
-
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  color: #ffffff;
-
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
   font-size: 13px;
-
   font-weight: 700;
-
   transition: all 0.25s ease;
-
   box-shadow: 0 4px 18px rgba(99, 102, 241, 0.40);
+  white-space: nowrap;
 }
-
 .meeting-join-btn:hover {
-
   transform: translateY(-2px);
-
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.55);
 }
 
@@ -467,11 +292,8 @@
    FOOTER
 ========================================================= */
 .meeting-footer {
-
   margin-top: 10px;
-
   font-size: 12px;
-
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -479,67 +301,46 @@
    LIGHT THEME
 ========================================================= */
 [data-theme="light"] .task-warning-banner {
-
   background: linear-gradient(
     135deg,
     rgba(245, 158, 11, 0.08),
     rgba(239, 68, 68, 0.04)
   ) !important;
-
   border-color: rgba(245, 158, 11, 0.25) !important;
 }
-
 [data-theme="light"] .twb-message,
 [data-theme="light"] .twb-msg {
-
   color: #374151 !important;
 }
-
 [data-theme="light"] .meeting-notification {
-
   background: rgba(99, 102, 241, 0.06) !important;
-
   border-color: rgba(99, 102, 241, 0.20) !important;
 }
-
 [data-theme="light"] .meeting-description {
-
   color: #374151 !important;
 }
-
 [data-theme="light"] .meeting-footer {
-
   color: #6b7280 !important;
+}
+[data-theme="light"] .twb-message,
+[data-theme="light"] .twb-checking {
+  color: #4b5563 !important;
 }
 
 /* =========================================================
    MOBILE RESPONSIVE
 ========================================================= */
 @media (max-width: 768px) {
-
   .task-warning-banner,
   .meeting-notification {
-
-    padding: 18px;
+    padding: 16px;
+    border-radius: 14px;
   }
-
-  .twb-actions {
-
-    flex-direction: column;
-  }
-
-  .twb-btn,
-  .meeting-join-btn {
-
+  .twb-actions { flex-direction: column; }
+  .twb-btn, .meeting-join-btn {
     width: 100%;
-
     justify-content: center;
   }
-
-  .meeting-link-box {
-
-    flex-direction: column;
-
-    align-items: flex-start;
-  }
+  .meeting-link-box { flex-direction: column; align-items: flex-start; }
+  .meeting-email-badge { margin-left: 0; margin-top: 6px; }
 }
