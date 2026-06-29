@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar           from '../../components/Sidebar/Sidebar';
 import Navbar            from '../../components/Navbar/Navbar';
 import Modal             from '../../components/Modal/Modal';
@@ -28,7 +28,7 @@ const EMPTY_FORM = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// Toast — fixed top-center, impossible to miss
+// Toast
 // ─────────────────────────────────────────────────────────────
 function Toast({ msg }) {
   if (!msg) return null;
@@ -40,23 +40,249 @@ function Toast({ msg }) {
       background: msg.err
         ? 'linear-gradient(135deg,#7f1d1d,#991b1b)'
         : 'linear-gradient(135deg,#064e3b,#065f46)',
-      border: `1px solid ${msg.err ? 'rgba(239,68,68,.5)' : 'rgba(16,185,129,.5)'}`,
-      borderRadius:14,
-      boxShadow:'0 12px 40px rgba(0,0,0,.5)',
+      border:`1px solid ${msg.err?'rgba(239,68,68,.5)':'rgba(16,185,129,.5)'}`,
+      borderRadius:14, boxShadow:'0 12px 40px rgba(0,0,0,.5)',
       color:'#fff', fontSize:14, fontWeight:700,
       display:'flex', alignItems:'center', gap:12,
       animation:'toastIn .35s cubic-bezier(.34,1.56,.64,1)',
-      fontFamily:'Plus Jakarta Sans,sans-serif',
-      whiteSpace:'nowrap',
+      fontFamily:'Plus Jakarta Sans,sans-serif', whiteSpace:'nowrap',
     }}>
-      <span style={{fontSize:20, flexShrink:0}}>{msg.err ? '❌' : '✅'}</span>
+      <span style={{fontSize:20,flexShrink:0}}>{msg.err?'❌':'✅'}</span>
       {msg.text}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// TaskForm — defined outside Tasks so it never remounts
+// AI Suggestion Panel
+// ─────────────────────────────────────────────────────────────
+function AISuggestPanel({ users, onSelect, onClose }) {
+  const [selectedUser, setSelectedUser] = useState('');
+  const [suggestions,  setSuggestions]  = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState('');
+
+  const BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+
+  const generateSuggestions = async () => {
+    if (!selectedUser) { setError('Please select an employee first'); return; }
+    setLoading(true); setError(''); setSuggestions([]);
+    const emp = users.find(u => String(u.id) === String(selectedUser));
+    if (!emp) { setLoading(false); return; }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const prompt = `You are an HR task manager AI for EMS Pro.
+Generate exactly 5 professional work tasks for this employee:
+Name: ${emp.full_name}
+Department: ${emp.department || 'General'}
+Employee ID: ${emp.employee_id}
+
+Return ONLY a valid JSON array, no other text, no markdown, no explanation:
+[
+  {"title":"Task title here","description":"Brief task description","priority":"medium","due_days":7},
+  ...
+]
+
+Priority must be one of: low, medium, high, urgent
+due_days is number of days from today (1-30)
+Make tasks specific to the ${emp.department || 'general'} department.`;
+
+      const res = await fetch(`${BASE}/ai-assistant/chat/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: prompt, history: [] }),
+      });
+
+      const data = await res.json();
+      const text = data.reply || '';
+
+      // Parse JSON from response
+      const match = text.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('Invalid AI response format');
+      const parsed = JSON.parse(match[0]);
+
+      // Add due_date from due_days
+      const today = new Date();
+      const withDates = parsed.map(t => ({
+        ...t,
+        due_date: new Date(today.getTime() + (t.due_days||7) * 86400000)
+          .toISOString().split('T')[0],
+        assigned_to: emp.id,
+        assigned_to_name: emp.full_name,
+        status: 'todo',
+      }));
+      setSuggestions(withDates);
+    } catch (e) {
+      setError('AI failed to generate suggestions. Try again.');
+      console.error(e);
+    } finally { setLoading(false); }
+  };
+
+  const PRIORITY_COLORS = {
+    low:    { bg:'rgba(34,197,94,.12)',  color:'#4ade80',  border:'rgba(34,197,94,.25)'  },
+    medium: { bg:'rgba(245,158,11,.12)', color:'#fbbf24',  border:'rgba(245,158,11,.25)' },
+    high:   { bg:'rgba(249,115,22,.12)', color:'#fb923c',  border:'rgba(249,115,22,.25)' },
+    urgent: { bg:'rgba(239,68,68,.12)',  color:'#f87171',  border:'rgba(239,68,68,.25)'  },
+  };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      {/* Employee selector */}
+      <div style={{
+        padding:'16px',
+        background:'rgba(99,102,241,.08)',
+        border:'1px solid rgba(99,102,241,.2)',
+        borderRadius:12,
+      }}>
+        <div style={{fontSize:13,color:'#a5b4fc',fontWeight:600,marginBottom:10,
+          display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:18}}>🤖</span>
+          Select an employee and let AI suggest relevant tasks
+        </div>
+        <div style={{display:'flex',gap:10}}>
+          <select
+            value={selectedUser}
+            onChange={e => { setSelectedUser(e.target.value); setSuggestions([]); setError(''); }}
+            style={{flex:1,padding:'10px 12px',background:'rgba(255,255,255,.06)',
+              border:'1px solid rgba(255,255,255,.12)',borderRadius:8,
+              color:'#e8eaf2',fontSize:13,fontFamily:'inherit',cursor:'pointer'}}
+          >
+            <option value="">Select employee…</option>
+            {users.map(u => (
+              <option key={u.id} value={u.id}>
+                {u.full_name} · {u.department || u.employee_id}
+              </option>
+            ))}
+          </select>
+          <button onClick={generateSuggestions} disabled={loading || !selectedUser}
+            style={{
+              padding:'10px 18px',borderRadius:8,border:'none',cursor:'pointer',
+              background: loading||!selectedUser ? 'rgba(99,102,241,.3)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              color:'#fff',fontSize:13,fontWeight:700,fontFamily:'inherit',
+              display:'flex',alignItems:'center',gap:8,transition:'all .2s',
+              opacity: loading||!selectedUser ? 0.6 : 1,
+              whiteSpace:'nowrap',
+            }}>
+            {loading ? (
+              <>
+                <div style={{width:14,height:14,border:'2px solid rgba(255,255,255,.3)',
+                  borderTopColor:'#fff',borderRadius:'50%',animation:'spin .6s linear infinite'}}/>
+                Generating…
+              </>
+            ) : '✨ Generate'}
+          </button>
+        </div>
+        {error && (
+          <div style={{marginTop:10,fontSize:12,color:'#f87171',
+            padding:'8px 12px',background:'rgba(239,68,68,.1)',
+            borderRadius:8,border:'1px solid rgba(239,68,68,.2)'}}>
+            ⚠ {error}
+          </div>
+        )}
+      </div>
+
+      {/* Suggestions */}
+      {loading && (
+        <div style={{textAlign:'center',padding:'32px 0'}}>
+          <div style={{fontSize:36,marginBottom:12,animation:'float 2s ease-in-out infinite'}}>🤖</div>
+          <div style={{color:'#a5b4fc',fontSize:13,fontWeight:600}}>AI is thinking…</div>
+          <div style={{color:'rgba(255,255,255,.3)',fontSize:12,marginTop:4}}>
+            Generating tasks for {users.find(u=>String(u.id)===String(selectedUser))?.full_name}
+          </div>
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <>
+          <div style={{fontSize:12,color:'rgba(255,255,255,.4)',fontWeight:600,
+            textTransform:'uppercase',letterSpacing:'.5px'}}>
+            ✨ AI Suggested Tasks — Click to use
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {suggestions.map((s, i) => {
+              const pc = PRIORITY_COLORS[s.priority] || PRIORITY_COLORS.medium;
+              return (
+                <div key={i}
+                  onClick={() => onSelect(s)}
+                  style={{
+                    padding:'14px 16px',borderRadius:12,cursor:'pointer',
+                    background:'rgba(255,255,255,.04)',
+                    border:'1px solid rgba(255,255,255,.08)',
+                    transition:'all .2s',
+                    display:'flex',alignItems:'flex-start',gap:14,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background='rgba(99,102,241,.1)';
+                    e.currentTarget.style.borderColor='rgba(99,102,241,.3)';
+                    e.currentTarget.style.transform='translateX(4px)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background='rgba(255,255,255,.04)';
+                    e.currentTarget.style.borderColor='rgba(255,255,255,.08)';
+                    e.currentTarget.style.transform='translateX(0)';
+                  }}
+                >
+                  {/* Number */}
+                  <div style={{
+                    width:28,height:28,borderRadius:8,flexShrink:0,
+                    background:'rgba(99,102,241,.2)',border:'1px solid rgba(99,102,241,.3)',
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    fontSize:12,fontWeight:800,color:'#a5b4fc',
+                  }}>
+                    {i+1}
+                  </div>
+
+                  {/* Content */}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:'#e8eaf2',
+                      marginBottom:4,lineHeight:1.4}}>
+                      {s.title}
+                    </div>
+                    {s.description && (
+                      <div style={{fontSize:12,color:'rgba(255,255,255,.4)',
+                        lineHeight:1.5,marginBottom:8}}>
+                        {s.description}
+                      </div>
+                    )}
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                      <span style={{
+                        fontSize:11,padding:'2px 8px',borderRadius:99,fontWeight:600,
+                        background:pc.bg,border:`1px solid ${pc.border}`,color:pc.color,
+                      }}>
+                        {PRIORITY_ICON[s.priority]} {s.priority}
+                      </span>
+                      <span style={{fontSize:11,color:'rgba(255,255,255,.35)',
+                        display:'flex',alignItems:'center',gap:4}}>
+                        📅 Due: {s.due_date}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div style={{color:'rgba(99,102,241,.5)',fontSize:16,flexShrink:0,marginTop:2}}>
+                    →
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{textAlign:'center',padding:'8px 0',
+            fontSize:12,color:'rgba(255,255,255,.25)'}}>
+            Click any task to pre-fill the form
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// TaskForm — outside Tasks to prevent remount
 // ─────────────────────────────────────────────────────────────
 function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAssignAll, users, isAdmin }) {
   return (
@@ -70,34 +296,29 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
 
       <div className="field" style={{marginBottom:12}}>
         <label>Task Title *</label>
-        <input
-          type="text" placeholder="e.g. Fix login bug"
+        <input type="text" placeholder="e.g. Fix login bug"
           value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-          style={{ borderColor: formErrors.title ? 'rgba(239,68,68,.6)' : '' }}
-        />
+          style={{borderColor: formErrors.title ? 'rgba(239,68,68,.6)' : ''}}/>
         {formErrors.title && <p className="field-err">{formErrors.title}</p>}
       </div>
 
       <div className="field" style={{marginBottom:12}}>
         <label>Description</label>
-        <textarea
-          rows={3} placeholder="Task details, requirements, notes…"
+        <textarea rows={3} placeholder="Task details, requirements, notes…"
           value={form.description}
-          onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-        />
+          onChange={e => setForm(p => ({ ...p, description: e.target.value }))}/>
       </div>
 
       {!isEdit && isAdmin && (
         <div
+          onClick={() => { setAssignAll(p => !p); setForm(p => ({ ...p, assigned_to:'' })); }}
           style={{
             display:'flex', alignItems:'center', gap:12, padding:'12px 16px',
             borderRadius:10, marginBottom:12, cursor:'pointer', transition:'all .2s',
             background: assignAll ? 'rgba(99,102,241,.15)' : 'rgba(255,255,255,.04)',
-            border: assignAll ? '1px solid rgba(99,102,241,.4)' : '1px solid rgba(255,255,255,.08)',
-          }}
-          onClick={() => { setAssignAll(p => !p); setForm(p => ({ ...p, assigned_to:'' })); }}
-        >
+            border: `1px solid ${assignAll ? 'rgba(99,102,241,.4)' : 'rgba(255,255,255,.08)'}`,
+          }}>
           <div style={{
             width:22,height:22,borderRadius:6,display:'flex',alignItems:'center',
             justifyContent:'center',fontSize:14,flexShrink:0,transition:'all .2s',
@@ -119,12 +340,10 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
         {isAdmin && (
           <div className="field">
             <label>Assign To {!assignAll && !isEdit && '*'}</label>
-            <select
-              value={form.assigned_to}
+            <select value={form.assigned_to}
               onChange={e => setForm(p => ({ ...p, assigned_to: e.target.value }))}
               disabled={assignAll}
-              style={{ borderColor: formErrors.assigned_to ? 'rgba(239,68,68,.6)' : '', opacity: assignAll ? 0.4 : 1 }}
-            >
+              style={{borderColor: formErrors.assigned_to ? 'rgba(239,68,68,.6)':'', opacity:assignAll?0.4:1}}>
               <option value="">{assignAll ? '— All selected —' : 'Select employee…'}</option>
               {users.map(u => (
                 <option key={u.id} value={u.id}>
@@ -147,11 +366,9 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
 
         <div className="field">
           <label>Due Date *</label>
-          <input
-            type="date" value={form.due_date}
+          <input type="date" value={form.due_date}
             onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))}
-            style={{ borderColor: formErrors.due_date ? 'rgba(239,68,68,.6)' : '' }}
-          />
+            style={{borderColor: formErrors.due_date ? 'rgba(239,68,68,.6)':''}}/>
           {formErrors.due_date && <p className="field-err">{formErrors.due_date}</p>}
         </div>
 
@@ -184,7 +401,7 @@ function TaskForm({ form, setForm, formErrors, saveErr, isEdit, assignAll, setAs
 }
 
 // ─────────────────────────────────────────────────────────────
-// TaskCard — defined outside Tasks so it never remounts
+// TaskCard — outside Tasks to prevent remount
 // ─────────────────────────────────────────────────────────────
 function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatusChange, onProgressUpdate }) {
   const isOverdue = t => t.status !== 'completed' && t.due_date && new Date(t.due_date) < new Date();
@@ -203,7 +420,7 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
 
   return (
     <div className={`task-card ${overdue?'overdue':''} ${isUpdating?'updating':''}`}
-      style={{ opacity: isUpdating ? 0.7 : 1 }}>
+      style={{opacity: isUpdating?0.7:1}}>
 
       {overdue && (
         <div style={{background:'rgba(239,68,68,.15)',borderRadius:6,padding:'4px 8px',
@@ -249,14 +466,13 @@ function TaskCard({ task, isAdmin, updatingId, onView, onEdit, onDelete, onStatu
       {!isAdmin && task.status !== 'completed' && (
         <input type="range" className="progress-slider"
           min={0} max={100} step={5} value={task.progress||0}
-          onChange={e => onProgressUpdate(task.id, Number(e.target.value))}
-        />
+          onChange={e => onProgressUpdate(task.id, Number(e.target.value))}/>
       )}
 
       {isAdmin && (
         <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
           {STATUSES.map(s => (
-            <button key={s} onClick={() => task.status !== s && onStatusChange(task, s)}
+            <button key={s} onClick={() => task.status!==s && onStatusChange(task,s)}
               style={{
                 padding:'3px 10px',borderRadius:20,border:'none',cursor:'pointer',
                 fontSize:11,fontWeight:600,fontFamily:'inherit',transition:'all .15s',
@@ -308,6 +524,7 @@ export default function Tasks() {
   const [showCreate,    setShowCreate]    = useState(false);
   const [showEdit,      setShowEdit]      = useState(false);
   const [showDetail,    setShowDetail]    = useState(false);
+  const [showAI,        setShowAI]        = useState(false);
   const [activeTask,    setActiveTask]    = useState(null);
   const [saving,        setSaving]        = useState(false);
   const [saveErr,       setSaveErr]       = useState('');
@@ -366,10 +583,10 @@ export default function Tasks() {
     if (filterPri) list = list.filter(t => t.priority === filterPri);
     return [...list].sort((a, b) => {
       let va, vb;
-      if (sortBy === 'priority')      { va = PRIORITY_ORDER[a.priority]||0; vb = PRIORITY_ORDER[b.priority]||0; }
-      else if (sortBy === 'due_date') { va = new Date(a.due_date); vb = new Date(b.due_date); }
-      else { va = new Date(a.created_at||0); vb = new Date(b.created_at||0); }
-      return sortOrder === 'asc' ? (va>vb?1:-1) : (va<vb?1:-1);
+      if (sortBy==='priority')      { va=PRIORITY_ORDER[a.priority]||0; vb=PRIORITY_ORDER[b.priority]||0; }
+      else if (sortBy==='due_date') { va=new Date(a.due_date); vb=new Date(b.due_date); }
+      else { va=new Date(a.created_at||0); vb=new Date(b.created_at||0); }
+      return sortOrder==='asc' ? (va>vb?1:-1) : (va<vb?1:-1);
     });
   }, [tasks, search, filterPri, sortBy, sortOrder]);
 
@@ -381,79 +598,52 @@ export default function Tasks() {
     return errs;
   };
 
-  // ── CREATE — handles backend partial success ──────────────
   const handleCreate = async () => {
     const errs = validate();
     if (Object.keys(errs).length) { setFormErrors(errs); return; }
     setSaving(true); setSaveErr('');
-
     try {
       if (assignAll && users.length > 0) {
         const results   = await Promise.allSettled(
           users.map(u => tasksAPI.create({ ...form, assigned_to: u.id }))
         );
-        const succeeded = results.filter(r => r.status === 'fulfilled').length;
-        const failed    = results.filter(r => r.status === 'rejected').length;
+        const succeeded = results.filter(r => r.status==='fulfilled').length;
+        const failed    = results.filter(r => r.status==='rejected').length;
         setShowCreate(false); resetForm(); await fetchTasks();
-        showToast(
-          failed === 0
-            ? `Task assigned to all ${succeeded} employees!`
-            : `Assigned to ${succeeded} employees (${failed} failed)`
-        );
+        showToast(failed===0 ? `Task assigned to all ${succeeded} employees!`
+          : `Assigned to ${succeeded} employees (${failed} failed)`);
       } else {
         await tasksAPI.create(form);
         setShowCreate(false); resetForm(); await fetchTasks();
         showToast('Task assigned successfully!');
       }
     } catch (e) {
-      // Backend returned an error — but the task MAY have been created
-      // (notification threw after the task saved). Re-fetch to check.
       const statusCode = e.response?.status;
-
       if (!statusCode || statusCode >= 500) {
-        // Server-side error — verify task was actually created
         try {
           await fetchTasks();
-          // Give state a moment to update then check
           setTimeout(() => {
             setTasks(prev => {
               const found = prev.find(t =>
-                t.title === form.title &&
-                String(t.assigned_to) === String(form.assigned_to)
+                t.title===form.title && String(t.assigned_to)===String(form.assigned_to)
               );
-              if (found) {
-                setShowCreate(false);
-                resetForm();
-                setSaving(false);
-                showToast('Task assigned successfully!');
-              } else {
-                setSaveErr('Failed to create task. Please try again.');
-                setSaving(false);
-              }
+              if (found) { setShowCreate(false); resetForm(); setSaving(false); showToast('Task assigned successfully!'); }
+              else { setSaveErr('Failed to create task. Please try again.'); setSaving(false); }
               return prev;
             });
           }, 600);
-          return; // exit early — setSaving handled in setTimeout
-        } catch {
-          setSaveErr('Failed to create task. Please try again.');
-        }
+          return;
+        } catch { setSaveErr('Failed to create task. Please try again.'); }
       } else {
-        // 4xx — real validation error from backend
         const data = e.response?.data;
         if (data && typeof data === 'object') {
-          const msgs = Object.entries(data)
-            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-            .join(' | ');
-          setSaveErr(msgs);
-        } else {
-          setSaveErr('Failed to create task. Please try again.');
-        }
+          setSaveErr(Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v)?v.join(', '):v}`).join(' | '));
+        } else { setSaveErr('Failed to create task. Please try again.'); }
       }
     }
     setSaving(false);
   };
 
-  // ── EDIT ─────────────────────────────────────────────────
   const openEdit = (task) => {
     setActiveTask(task);
     setForm({
@@ -477,21 +667,19 @@ export default function Tasks() {
     try {
       await tasksAPI.update(activeTask.id, form);
       setShowEdit(false); resetForm(); setActiveTask(null);
-      showToast('Task updated successfully!');
-      fetchTasks();
-    } catch {
-      setSaveErr('Failed to update task. Please try again.');
-    } finally { setSaving(false); }
+      showToast('Task updated successfully!'); fetchTasks();
+    } catch { setSaveErr('Failed to update task. Please try again.'); }
+    finally { setSaving(false); }
   };
 
   const handleStatusChange = async (task, newStatus) => {
     setUpdatingId(task.id);
     try {
       await tasksAPI.update(task.id, { status: newStatus });
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      setTasks(prev => prev.map(t => t.id===task.id ? { ...t, status:newStatus } : t));
       showToast(`Task moved to ${STATUS_LABELS[newStatus]}`);
     } catch { showToast('Update failed', true); }
-    finally  { setUpdatingId(null); }
+    finally { setUpdatingId(null); }
   };
 
   const handleProgressUpdate = async (id, progress) => {
@@ -506,17 +694,33 @@ export default function Tasks() {
     setUpdatingId(id);
     try {
       await tasksAPI.delete(id);
-      setTasks(prev => prev.filter(t => t.id !== id));
+      setTasks(prev => prev.filter(t => t.id!==id));
       showToast('Task deleted');
     } catch { showToast('Delete failed', true); }
-    finally  { setUpdatingId(null); }
+    finally { setUpdatingId(null); }
+  };
+
+  // ── AI suggestion selected → pre-fill form ────────────────
+  const handleAISuggestionSelect = (suggestion) => {
+    setForm({
+      title:       suggestion.title       || '',
+      description: suggestion.description || '',
+      assigned_to: String(suggestion.assigned_to) || '',
+      priority:    suggestion.priority    || 'medium',
+      due_date:    suggestion.due_date    || '',
+      status:      'todo',
+    });
+    setFormErrors({}); setSaveErr('');
+    setShowAI(false);
+    setShowCreate(true);
+    showToast(`✨ AI task loaded — review and assign!`);
   };
 
   const resetForm = () => {
     setForm(EMPTY_FORM); setFormErrors({}); setSaveErr(''); setAssignAll(false);
   };
 
-  const showToast = (text, err = false) => {
+  const showToast = (text, err=false) => {
     setToast({ text, err });
     setTimeout(() => setToast(null), 4000);
   };
@@ -526,9 +730,9 @@ export default function Tasks() {
 
   const stats = {
     total:      tasks.length,
-    pending:    tasks.filter(t => t.status === 'todo').length,
-    inProgress: tasks.filter(t => t.status === 'in_progress').length,
-    completed:  tasks.filter(t => t.status === 'completed').length,
+    pending:    tasks.filter(t => t.status==='todo').length,
+    inProgress: tasks.filter(t => t.status==='in_progress').length,
+    completed:  tasks.filter(t => t.status==='completed').length,
     overdue:    tasks.filter(t => isOverdue(t)).length,
   };
 
@@ -547,14 +751,9 @@ export default function Tasks() {
         />
 
         <div className="dash-content">
-
-          {/* Toast */}
           <Toast msg={toast}/>
 
-          {/* TaskWarningBanner — employees only */}
-          {!isAdmin() && (
-            <TaskWarningBanner notifications={notifications}/>
-          )}
+          {!isAdmin() && <TaskWarningBanner notifications={notifications}/>}
 
           {/* Stats */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',
@@ -564,10 +763,11 @@ export default function Tasks() {
               { label:'Pending',     value:stats.pending,    color:'#f59e0b', icon:'⏳' },
               { label:'In Progress', value:stats.inProgress, color:'#6366f1', icon:'🔄' },
               { label:'Completed',   value:stats.completed,  color:'#10b981', icon:'✅' },
-              { label:'Overdue',     value:stats.overdue,    color:'#ef4444', icon:'🚨', hi:stats.overdue>0 },
+              { label:'Overdue',     value:stats.overdue,    color:'#ef4444', icon:'🚨',
+                hi:stats.overdue>0 },
             ].map(s => (
               <div key={s.label} className="section-card" style={{
-                padding:'16px 18px', display:'flex', alignItems:'center', gap:12,
+                padding:'16px 18px',display:'flex',alignItems:'center',gap:12,
                 border:  s.hi ? '1px solid rgba(239,68,68,.4)' : '',
                 background: s.hi ? 'rgba(239,68,68,.06)' : '',
               }}>
@@ -580,19 +780,13 @@ export default function Tasks() {
             ))}
           </div>
 
-          {/* Admin overdue alert */}
           {isAdmin() && stats.overdue > 0 && (
             <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 18px',
               marginBottom:20,background:'rgba(239,68,68,.08)',
               border:'1px solid rgba(239,68,68,.25)',borderRadius:12,fontSize:13,color:'#fca5a5'}}>
               <span style={{fontSize:20}}>🚨</span>
-              <div>
-                <strong style={{color:'#f87171'}}>
-                  {stats.overdue} overdue task{stats.overdue>1?'s':''}
-                </strong>
-                {' '}— employees with 2+ overdue tasks will automatically receive a meeting
-                notification and email with a Jitsi link when they log in.
-              </div>
+              <strong style={{color:'#f87171'}}>{stats.overdue} overdue task{stats.overdue>1?'s':''}</strong>
+              {' '}— employees with 2+ incomplete tasks receive automatic meeting notifications.
             </div>
           )}
 
@@ -643,10 +837,27 @@ export default function Tasks() {
             </button>
 
             {isAdmin() && (
-              <button className="qa-btn primary"
-                onClick={() => { resetForm(); setShowCreate(true); }}>
-                ➕ Assign Task
-              </button>
+              <>
+                {/* AI Suggest button */}
+                <button onClick={() => setShowAI(true)}
+                  style={{
+                    padding:'9px 16px',borderRadius:10,border:'none',cursor:'pointer',
+                    background:'linear-gradient(135deg,#7c3aed,#6366f1)',
+                    color:'#fff',fontSize:13,fontWeight:700,fontFamily:'inherit',
+                    display:'flex',alignItems:'center',gap:6,
+                    boxShadow:'0 4px 16px rgba(99,102,241,.4)',transition:'all .2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform='translateY(0)'}
+                >
+                  ✨ AI Suggest
+                </button>
+
+                <button className="qa-btn primary"
+                  onClick={() => { resetForm(); setShowCreate(true); }}>
+                  ➕ Assign Task
+                </button>
+              </>
             )}
           </div>
 
@@ -687,13 +898,11 @@ export default function Tasks() {
                         </div>
                       ) : (
                         items.map(t => (
-                          <TaskCard
-                            key={t.id} task={t}
+                          <TaskCard key={t.id} task={t}
                             isAdmin={isAdmin()} updatingId={updatingId}
                             onView={handleView} onEdit={handleEdit_cb}
                             onDelete={handleDelete} onStatusChange={handleStatusChange}
-                            onProgressUpdate={handleProgressUpdate}
-                          />
+                            onProgressUpdate={handleProgressUpdate}/>
                         ))
                       )}
                     </div>
@@ -705,11 +914,24 @@ export default function Tasks() {
         </div>
       </div>
 
+      {/* AI SUGGEST MODAL */}
+      <Modal open={showAI} onClose={() => setShowAI(false)}
+        title="✨ AI Task Suggestions" width="600px"
+        footer={<>
+          <button className="btn-ghost" onClick={() => setShowAI(false)}>Close</button>
+        </>}>
+        <AISuggestPanel
+          users={users}
+          onSelect={handleAISuggestionSelect}
+          onClose={() => setShowAI(false)}
+        />
+      </Modal>
+
       {/* CREATE MODAL */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)}
+      <Modal open={showCreate} onClose={() => { setShowCreate(false); resetForm(); }}
         title="➕ Assign New Task" width="600px"
         footer={<>
-          <button className="btn-ghost" onClick={() => setShowCreate(false)}>Cancel</button>
+          <button className="btn-ghost" onClick={() => { setShowCreate(false); resetForm(); }}>Cancel</button>
           <button className="btn-primary" onClick={handleCreate} disabled={saving}>
             {saving
               ? <><div className="spin"/>{assignAll?`Assigning to ${users.length}…`:'Saving…'}</>
@@ -766,9 +988,7 @@ export default function Tasks() {
                 </span>
                 {isOverdue(activeTask) && (
                   <span style={{fontSize:12,padding:'3px 10px',borderRadius:20,
-                    background:'rgba(239,68,68,.2)',color:'#f87171'}}>
-                    🚨 Overdue
-                  </span>
+                    background:'rgba(239,68,68,.2)',color:'#f87171'}}>🚨 Overdue</span>
                 )}
               </div>
             </div>
