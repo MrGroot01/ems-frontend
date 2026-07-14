@@ -17,67 +17,51 @@ const strength = (p) => {
 const STRENGTH_LABEL = ['','Weak','Fair','Good','Strong'];
 const STRENGTH_COLOR = ['','#ef4444','#f59e0b','#10b981','#6366f1'];
 
-// ── SVG icon set ────────────────────────────────────────────
 const Icon = {
-  user: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
-    </svg>
-  ),
-  badge: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="2" y="6" width="20" height="14" rx="2"/>
-      <circle cx="9" cy="13" r="2"/>
-      <path d="M15 11h3M15 15h3"/>
-    </svg>
-  ),
-  mail: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-      <polyline points="22,6 12,13 2,6"/>
-    </svg>
-  ),
-  phone: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.36 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-    </svg>
-  ),
-  building: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>
-    </svg>
-  ),
-  shield: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-  ),
-  lock: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-    </svg>
-  ),
-  key: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-    </svg>
-  ),
-  eyeOff: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-      <line x1="1" y1="1" x2="23" y2="23"/>
-    </svg>
-  ),
-  eye: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  ),
+  user: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  badge: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="14" rx="2"/><circle cx="9" cy="13" r="2"/><path d="M15 11h3M15 15h3"/></svg>,
+  mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+  phone: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.36 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+  building: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>,
+  shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  lock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  key: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
+  eyeOff: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+  eye: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
 };
 
+// ─────────────────────────────────────────────────────────────
+// Field — OUTSIDE Register to prevent remount on every keystroke
+// ─────────────────────────────────────────────────────────────
+function Field({ name, label, icon, type='text', placeholder, eye, eyeShow, onEyeClick, error, value, onChange, focused, onFocus, onBlur }) {
+  return (
+    <div className={`rg-field ${focused ? 'focused' : ''} ${error ? 'errored' : ''}`}>
+      <label>{label}</label>
+      <div className="rg-input-wrap">
+        <span className="rg-input-icon">{icon}</span>
+        <input
+          type={eye ? (eyeShow ? 'text' : 'password') : type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        {eye && (
+          <button type="button" className="rg-eye" tabIndex={-1} onClick={onEyeClick}>
+            {eyeShow ? Icon.eyeOff : Icon.eye}
+          </button>
+        )}
+      </div>
+      {error && <p className="rg-field-err">⚠ {error}</p>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Register component
+// ─────────────────────────────────────────────────────────────
 export default function Register() {
   const navigate = useNavigate();
   const [loading,         setLoading]         = useState(false);
@@ -89,7 +73,7 @@ export default function Register() {
   const [photo,           setPhoto]           = useState(null);
   const [focused,         setFocused]         = useState('');
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  const [form,            setForm]            = useState({
+  const [form, setForm] = useState({
     full_name: '', employee_id: '', email: '', phone: '',
     department: '', role: 'employee',
     password: '', confirm_password: '', profile_image: null,
@@ -128,10 +112,7 @@ export default function Register() {
     e.preventDefault();
     const v = validate();
     if (Object.keys(v).length) { setErrs(v); return; }
-    if (!captchaVerified) {
-      setGErr('Please verify the captcha first');
-      return;
-    }
+    if (!captchaVerified) { setGErr('Please verify the captcha first'); return; }
     setLoading(true);
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v); });
@@ -142,36 +123,11 @@ export default function Register() {
     } catch (err) {
       const data = err.response?.data || {};
       const e2 = {};
-      Object.entries(data).forEach(([k, v]) => {
-        e2[k] = Array.isArray(v) ? v[0] : v;
-      });
+      Object.entries(data).forEach(([k, v]) => { e2[k] = Array.isArray(v) ? v[0] : v; });
       setErrs(e2);
       setGErr('Registration failed — please fix the errors above.');
     } finally { setLoading(false); }
   };
-
-  // ── Field component ─────────────────────────────────────
-  const Field = ({ name, label, icon, type='text', placeholder, eye, eyeShow, onEyeClick, error }) => (
-    <div className={`rg-field ${focused === name ? 'focused' : ''} ${error ? 'errored' : ''}`}>
-      <label>{label}</label>
-      <div className="rg-input-wrap">
-        <span className="rg-input-icon">{icon}</span>
-        <input
-          type={eye ? (eyeShow ? 'text' : 'password') : type}
-          name={name} value={form[name]} onChange={change}
-          placeholder={placeholder}
-          onFocus={() => setFocused(name)}
-          onBlur={() => setFocused('')}
-        />
-        {eye && (
-          <button type="button" className="rg-eye" tabIndex={-1} onClick={onEyeClick}>
-            {eyeShow ? Icon.eyeOff : Icon.eye}
-          </button>
-        )}
-      </div>
-      {error && <p className="rg-field-err">⚠ {error}</p>}
-    </div>
-  );
 
   return (
     <div className="rg-page">
@@ -203,41 +159,61 @@ export default function Register() {
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                   Upload Photo
-                  <input type="file" name="profile_image"
-                    accept="image/*" hidden onChange={change}/>
+                  <input type="file" name="profile_image" accept="image/*" hidden onChange={change}/>
                 </label>
               </div>
             </div>
 
             {/* Full Name */}
-            <Field name="full_name" label="Full Name" icon={Icon.user}
-              placeholder="John Doe" error={errs.full_name}/>
+            <Field
+              name="full_name" label="Full Name" icon={Icon.user}
+              placeholder="John Doe" error={errs.full_name}
+              value={form.full_name} onChange={change}
+              focused={focused === 'full_name'}
+              onFocus={() => setFocused('full_name')}
+              onBlur={() => setFocused('')}
+            />
 
             {/* Employee ID */}
-            <Field name="employee_id" label="Employee ID" icon={Icon.badge}
-              placeholder="EMP001" error={errs.employee_id}/>
+            <Field
+              name="employee_id" label="Employee ID" icon={Icon.badge}
+              placeholder="EMP001" error={errs.employee_id}
+              value={form.employee_id} onChange={change}
+              focused={focused === 'employee_id'}
+              onFocus={() => setFocused('employee_id')}
+              onBlur={() => setFocused('')}
+            />
 
             {/* Email */}
-            <Field name="email" label="Email Address" icon={Icon.mail}
-              type="email" placeholder="you@company.com" error={errs.email}/>
+            <Field
+              name="email" label="Email Address" icon={Icon.mail}
+              type="email" placeholder="you@company.com" error={errs.email}
+              value={form.email} onChange={change}
+              focused={focused === 'email'}
+              onFocus={() => setFocused('email')}
+              onBlur={() => setFocused('')}
+            />
 
             {/* Phone */}
-            <Field name="phone" label="Phone Number" icon={Icon.phone}
-              type="tel" placeholder="+1 234 567 8900" error={errs.phone}/>
+            <Field
+              name="phone" label="Phone Number" icon={Icon.phone}
+              type="tel" placeholder="+91 98765 43210" error={errs.phone}
+              value={form.phone} onChange={change}
+              focused={focused === 'phone'}
+              onFocus={() => setFocused('phone')}
+              onBlur={() => setFocused('')}
+            />
 
             {/* Department */}
-            <div className={`rg-field ${focused === 'department' ? 'focused' : ''} ${errs.department ? 'errored' : ''}`}>
+            <div className={`rg-field ${focused==='department'?'focused':''} ${errs.department?'errored':''}`}>
               <label>Department</label>
               <div className="rg-input-wrap">
                 <span className="rg-input-icon">{Icon.building}</span>
-                <select name="department" value={form.department}
-                  onChange={change}
+                <select name="department" value={form.department} onChange={change}
                   onFocus={() => setFocused('department')}
                   onBlur={() => setFocused('')}>
                   <option value="">Select department…</option>
-                  {DEPTS.map(d =>
-                    <option key={d} value={d.toLowerCase()}>{d}</option>
-                  )}
+                  {DEPTS.map(d => <option key={d} value={d.toLowerCase()}>{d}</option>)}
                 </select>
                 <span className="rg-select-arrow">▾</span>
               </div>
@@ -245,7 +221,7 @@ export default function Register() {
             </div>
 
             {/* Role */}
-            <div className={`rg-field ${focused === 'role' ? 'focused' : ''}`}>
+            <div className={`rg-field ${focused==='role'?'focused':''}`}>
               <label>Role</label>
               <div className="rg-input-wrap">
                 <span className="rg-input-icon">{Icon.shield}</span>
@@ -260,17 +236,19 @@ export default function Register() {
             </div>
 
             {/* Password */}
-            <div className={`rg-field ${focused === 'password' ? 'focused' : ''} ${errs.password ? 'errored' : ''}`}>
+            <div className={`rg-field ${focused==='password'?'focused':''} ${errs.password?'errored':''}`}>
               <label>Password</label>
               <div className="rg-input-wrap">
                 <span className="rg-input-icon">{Icon.lock}</span>
-                <input type={showP ? 'text' : 'password'} name="password"
-                  value={form.password} onChange={change}
+                <input
+                  type={showP ? 'text' : 'password'}
+                  name="password" value={form.password} onChange={change}
                   placeholder="Min. 8 characters"
                   onFocus={() => setFocused('password')}
-                  onBlur={() => setFocused('')}/>
+                  onBlur={() => setFocused('')}
+                />
                 <button type="button" className="rg-eye" tabIndex={-1}
-                  onClick={() => setShowP(p=>!p)}>
+                  onClick={() => setShowP(p => !p)}>
                   {showP ? Icon.eyeOff : Icon.eye}
                 </button>
               </div>
@@ -279,10 +257,10 @@ export default function Register() {
                   <div className="rg-pwd-bars">
                     {[1,2,3,4].map(i => (
                       <div key={i} className="rg-pwd-bar"
-                        style={{ background: sc >= i ? STRENGTH_COLOR[sc] : 'rgba(255,255,255,.1)' }}/>
+                        style={{background: sc>=i ? STRENGTH_COLOR[sc] : 'rgba(255,255,255,.1)'}}/>
                     ))}
                   </div>
-                  <p className="rg-pwd-hint" style={{ color: STRENGTH_COLOR[sc] }}>
+                  <p className="rg-pwd-hint" style={{color: STRENGTH_COLOR[sc]}}>
                     {STRENGTH_LABEL[sc]}
                   </p>
                 </>
@@ -291,25 +269,26 @@ export default function Register() {
             </div>
 
             {/* Confirm Password */}
-            <div className={`rg-field ${focused === 'confirm_password' ? 'focused' : ''} ${errs.confirm_password ? 'errored' : ''}`}>
+            <div className={`rg-field ${focused==='confirm_password'?'focused':''} ${errs.confirm_password?'errored':''}`}>
               <label>Confirm Password</label>
               <div className="rg-input-wrap">
                 <span className="rg-input-icon">{Icon.key}</span>
-                <input type={showC ? 'text' : 'password'} name="confirm_password"
-                  value={form.confirm_password} onChange={change}
+                <input
+                  type={showC ? 'text' : 'password'}
+                  name="confirm_password" value={form.confirm_password} onChange={change}
                   placeholder="Repeat password"
                   onFocus={() => setFocused('confirm_password')}
-                  onBlur={() => setFocused('')}/>
+                  onBlur={() => setFocused('')}
+                />
                 <button type="button" className="rg-eye" tabIndex={-1}
-                  onClick={() => setShowC(p=>!p)}>
+                  onClick={() => setShowC(p => !p)}>
                   {showC ? Icon.eyeOff : Icon.eye}
                 </button>
               </div>
               {form.confirm_password && form.password !== form.confirm_password && (
                 <p className="rg-field-err">⚠ Passwords do not match</p>
               )}
-              {errs.confirm_password &&
-                <p className="rg-field-err">⚠ {errs.confirm_password}</p>}
+              {errs.confirm_password && <p className="rg-field-err">⚠ {errs.confirm_password}</p>}
             </div>
 
           </div>
@@ -319,8 +298,7 @@ export default function Register() {
             <Captcha onVerify={(valid) => setCaptchaVerified(valid)} />
           </div>
 
-          <button type="submit" className="rg-submit"
-            disabled={loading || !captchaVerified}>
+          <button type="submit" className="rg-submit" disabled={loading || !captchaVerified}>
             {loading
               ? <><div className="rg-spin"/> Creating account…</>
               : <>🚀 Create Account</>}
