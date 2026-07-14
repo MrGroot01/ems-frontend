@@ -2,19 +2,22 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Page ─────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   PAGE LAYOUT
+══════════════════════════════════════════════════════════ */
 .lp-page {
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height for mobile */
   display: flex;
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: #060810;
-  overflow: hidden;
+  overflow-x: hidden;
   position: relative;
 }
 
-/* ── Particle canvas ─────────────────────────────────────── */
+/* ── Particle canvas ──────────────────────────────────────── */
 .lp-canvas {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -22,9 +25,9 @@
   pointer-events: none;
 }
 
-/* ── Mesh gradient ───────────────────────────────────────── */
+/* ── Mesh gradient ────────────────────────────────────────── */
 .lp-mesh {
-  position: absolute; inset: 0; z-index: 0;
+  position: fixed; inset: 0; z-index: 0;
   background:
     radial-gradient(ellipse 80% 60% at 15% 20%, rgba(99,102,241,.22) 0%, transparent 60%),
     radial-gradient(ellipse 60% 60% at 85% 80%, rgba(6,182,212,.18) 0%, transparent 60%),
@@ -32,55 +35,57 @@
   animation: meshPulse 10s ease-in-out infinite alternate;
   pointer-events: none;
 }
-@keyframes meshPulse {
-  from { opacity: .6; }
-  to   { opacity: 1;  }
-}
+@keyframes meshPulse { from{opacity:.6} to{opacity:1} }
 
-/* ── Left panel ──────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════════════════════════ */
 .lp-left {
   flex: 1.2;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 80px 70px;
+  padding: 60px 60px;
   position: relative;
   z-index: 2;
+  min-width: 0;
 }
 
 /* Logo */
 .lp-logo {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 64px;
+  display: flex; align-items: center; gap: 14px; margin-bottom: 48px;
 }
 .lp-logo-box {
-  width: 52px; height: 52px;
+  width: 48px; height: 48px; min-width: 48px;
   background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-  box-shadow: 0 0 40px rgba(99,102,241,.5);
+  font-size: 24px;
+  box-shadow: 0 0 32px rgba(99,102,241,.5);
 }
 .lp-logo-text {
-  font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -.5px;
+  font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px;
+  white-space: nowrap;
 }
 .lp-logo-text span { color: #818cf8; }
 
 /* Hero text */
-.lp-hero { margin-bottom: 40px; }
+.lp-hero { margin-bottom: 32px; }
 .lp-hero-pre {
-  font-size: 58px; font-weight: 800; line-height: 1.05;
+  font-size: 48px; font-weight: 800; line-height: 1.05;
   letter-spacing: -2px; color: #fff;
 }
 .lp-hero-title {
-  font-size: 58px; font-weight: 800; line-height: 1.1;
-  letter-spacing: -2px; margin-bottom: 20px;
+  font-size: 48px; font-weight: 800; line-height: 1.1;
+  letter-spacing: -2px; margin-bottom: 18px;
   display: flex; align-items: center; gap: 4px;
-  min-height: 72px;
+  min-height: 60px; flex-wrap: wrap;
 }
 .lp-hl {
   background: linear-gradient(135deg,#818cf8,#67e8f9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .lp-cursor {
   color: #818cf8;
@@ -91,21 +96,21 @@
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 .lp-hero-sub {
-  font-size: 16px; color: rgba(255,255,255,.42);
-  line-height: 1.75; max-width: 420px;
+  font-size: 15px; color: rgba(255,255,255,.42);
+  line-height: 1.75; max-width: 400px;
 }
 
 /* Badges */
 .lp-badges {
-  display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px;
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;
 }
 .lp-badge {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 9px 16px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
   background: rgba(255,255,255,.05);
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 100px;
-  color: rgba(255,255,255,.6); font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.6); font-size: 12px; font-weight: 500;
   backdrop-filter: blur(8px);
   transition: all .2s;
 }
@@ -116,44 +121,49 @@
 }
 
 /* Mini stat cards */
-.lp-stats {
-  display: flex; gap: 12px; flex-wrap: wrap;
-}
+.lp-stats { display: flex; gap: 10px; flex-wrap: wrap; }
 .lp-stat-card {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
+  border-radius: 12px;
   backdrop-filter: blur(10px);
-  transition: all .25s;
-  cursor: default;
+  transition: all .25s; cursor: default;
 }
 .lp-stat-card:hover {
   background: rgba(99,102,241,.1);
   border-color: rgba(99,102,241,.25);
   transform: translateY(-2px);
 }
-.lp-stat-icon { font-size: 22px; }
+.lp-stat-icon { font-size: 20px; }
 .lp-stat-label {
-  font-size: 11px; color: rgba(255,255,255,.4);
-  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 2px;
+  font-size: 10px; color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 1px;
 }
-.lp-stat-val {
-  font-size: 13px; font-weight: 700; color: #818cf8;
-}
+.lp-stat-val { font-size: 12px; font-weight: 700; color: #818cf8; }
 
-/* ── Right panel ─────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════════════════ */
 .lp-right {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 40px; position: relative; z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 40px;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
 }
 
 .lp-card {
-  width: 100%; max-width: 450px;
-  background: rgba(15,17,28,.85);
+  width: 100%;
+  max-width: 440px;
+  background: rgba(15,17,28,.88);
   border: 1px solid rgba(255,255,255,.1);
-  border-radius: 28px; padding: 44px;
+  border-radius: 28px;
+  padding: 40px;
   backdrop-filter: blur(50px);
   box-shadow:
     0 32px 80px rgba(0,0,0,.6),
@@ -167,21 +177,21 @@
 }
 
 /* Card header */
-.lp-card-head { text-align: center; margin-bottom: 28px; }
+.lp-card-head { text-align: center; margin-bottom: 24px; }
 .lp-card-avatar {
-  width: 60px; height: 60px;
+  width: 56px; height: 56px;
   background: linear-gradient(135deg,rgba(99,102,241,.3),rgba(139,92,246,.2));
   border: 1px solid rgba(99,102,241,.3);
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; margin: 0 auto 16px;
+  font-size: 26px; margin: 0 auto 14px;
   box-shadow: 0 8px 24px rgba(99,102,241,.25);
 }
 .lp-card-head h2 {
-  font-size: 24px; font-weight: 800; color: #fff;
-  letter-spacing: -.5px; margin-bottom: 6px;
+  font-size: 22px; font-weight: 800; color: #fff;
+  letter-spacing: -.5px; margin-bottom: 5px;
 }
-.lp-card-head p { color: rgba(255,255,255,.4); font-size: 14px; }
+.lp-card-head p { color: rgba(255,255,255,.4); font-size: 13px; }
 
 /* Tabs */
 .lp-tabs {
@@ -189,10 +199,10 @@
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px; padding: 5px; gap: 4px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 .lp-tab {
-  flex: 1; padding: 10px;
+  flex: 1; padding: 9px;
   border: none; background: none;
   border-radius: 10px; cursor: pointer;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -218,8 +228,8 @@
   display: flex; align-items: center; gap: 10px;
   background: rgba(239,68,68,.1);
   border: 1px solid rgba(239,68,68,.25);
-  border-radius: 10px; padding: 11px 14px;
-  color: #fca5a5; font-size: 13px; margin-bottom: 20px;
+  border-radius: 10px; padding: 10px 14px;
+  color: #fca5a5; font-size: 13px; margin-bottom: 18px;
   animation: shake .4s ease;
 }
 @keyframes shake {
@@ -228,26 +238,22 @@
   75%{transform:translateX(6px)}
 }
 
-/* ── Fields ──────────────────────────────────────────────── */
-.lp-field {
-  margin-bottom: 18px;
-  transition: all .2s;
-}
+/* ── Fields ───────────────────────────────────────────────── */
+.lp-field { margin-bottom: 16px; transition: all .2s; }
 .lp-field label {
   display: block;
-  font-size: 11.5px; font-weight: 700; letter-spacing: .6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .6px;
   color: rgba(255,255,255,.45); text-transform: uppercase;
-  margin-bottom: 8px; transition: color .2s;
+  margin-bottom: 7px; transition: color .2s;
 }
 .lp-field.focused label { color: #818cf8; }
 .lp-field.errored label { color: #f87171; }
 
 .lp-input-wrap { position: relative; }
 
-/* SVG icon */
 .lp-input-icon {
-  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-  width: 18px; height: 18px;
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px;
   color: rgba(255,255,255,.3);
   pointer-events: none; z-index: 1;
   transition: color .2s;
@@ -257,10 +263,10 @@
 
 .lp-input-wrap input {
   width: 100%;
-  padding: 13px 46px 13px 46px;
+  padding: 12px 44px 12px 42px;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.1);
-  border-radius: 12px;
+  border-radius: 11px;
   color: #fff;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px; outline: none;
@@ -278,35 +284,33 @@
   border-color: rgba(239,68,68,.6);
   background: rgba(239,68,68,.06);
 }
-
 .lp-field-err {
   color: #f87171; font-size: 11px; margin-top: 5px;
   display: flex; align-items: center; gap: 4px;
 }
 
-/* Eye button */
 .lp-eye {
-  position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   background: none; border: none; cursor: pointer;
   color: rgba(255,255,255,.3); transition: color .2s;
-  display: flex; align-items: center; z-index: 2;
+  display: flex; align-items: center; z-index: 2; padding: 4px;
 }
-.lp-eye svg { width: 18px; height: 18px; }
+.lp-eye svg { width: 17px; height: 17px; }
 .lp-eye:hover { color: rgba(255,255,255,.7); }
 
 /* Remember + forgot */
 .lp-check-row {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 .lp-chk {
-  display: flex; align-items: center; gap: 9px;
+  display: flex; align-items: center; gap: 8px;
   color: rgba(255,255,255,.45); font-size: 13px; cursor: pointer;
   user-select: none;
 }
 .lp-chk input { display: none; }
 .lp-chk-box {
-  width: 18px; height: 18px; border-radius: 5px;
+  width: 17px; height: 17px; border-radius: 5px;
   border: 1.5px solid rgba(255,255,255,.2);
   background: rgba(255,255,255,.05);
   display: flex; align-items: center; justify-content: center;
@@ -316,10 +320,8 @@
   background: #6366f1; border-color: #6366f1;
 }
 .lp-chk input:checked ~ .lp-chk-box::after {
-  content: '✓';
-  font-size: 11px; color: #fff; font-weight: 700;
+  content: '✓'; font-size: 10px; color: #fff; font-weight: 700;
 }
-
 .lp-forgot {
   color: #818cf8; font-size: 13px; font-weight: 600;
   text-decoration: none; transition: color .2s;
@@ -327,11 +329,11 @@
 .lp-forgot:hover { color: #c7d2fe; }
 
 /* Captcha */
-.lp-captcha-wrap { margin-bottom: 20px; }
+.lp-captcha-wrap { margin-bottom: 18px; }
 
-/* Submit button */
+/* Submit */
 .lp-submit {
-  width: 100%; padding: 15px;
+  width: 100%; padding: 14px;
   background: linear-gradient(135deg,#6366f1,#8b5cf6);
   border: none; border-radius: 12px;
   color: #fff;
@@ -355,27 +357,21 @@
   box-shadow: 0 14px 42px rgba(99,102,241,.55);
 }
 .lp-submit:active:not(:disabled) { transform: translateY(0); }
-.lp-submit:disabled {
-  opacity: .5; cursor: not-allowed; transform: none;
-}
-.lp-arrow {
-  font-size: 18px; transition: transform .2s;
-}
+.lp-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.lp-arrow { font-size: 18px; transition: transform .2s; }
 .lp-submit:hover:not(:disabled) .lp-arrow { transform: translateX(4px); }
 
-/* Spinner */
 .lp-spin {
   width: 18px; height: 18px;
   border: 2px solid rgba(255,255,255,.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .7s linear infinite; flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Card footer */
 .lp-card-footer {
-  text-align: center; margin-top: 22px;
+  text-align: center; margin-top: 20px;
   color: rgba(255,255,255,.4); font-size: 13px;
 }
 .lp-card-footer a {
@@ -387,22 +383,93 @@
   color: rgba(255,255,255,.35); font-size: 13px;
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 1100px) and (min-width: 901px) {
-  .lp-hero-title, .lp-hero-pre { font-size: 44px; }
-  .lp-left { padding: 60px 40px; }
-  .lp-stats { gap: 8px; }
-  .lp-stat-card { padding: 12px 14px; }
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — LAPTOP SMALL (1024px – 1280px)
+   Both panels visible but scaled down
+══════════════════════════════════════════════════════════ */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .lp-left { padding: 48px 40px; }
+  .lp-hero-pre,
+  .lp-hero-title { font-size: 38px; min-height: 50px; }
+  .lp-hero-sub { font-size: 14px; }
+  .lp-stat-card { padding: 10px 12px; }
+  .lp-card { padding: 36px 32px; }
 }
- 
-@media (max-width: 900px) {
-  /* Right panel takes full viewport height nicely on mobile */
-  .lp-right { padding: 16px; min-height: 100vh; }
-  .lp-card  { padding: 32px 24px; border-radius: 22px; }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET LANDSCAPE (769px – 1024px)
+   Left panel shrinks to essentials only
+══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .lp-page { align-items: stretch; }
+
+  .lp-left {
+    padding: 40px 32px;
+    flex: 0 0 42%;
+    justify-content: center;
+  }
+
+  .lp-logo { margin-bottom: 32px; }
+  .lp-logo-box { width: 42px; height: 42px; font-size: 20px; }
+  .lp-logo-text { font-size: 18px; }
+
+  .lp-hero-pre,
+  .lp-hero-title { font-size: 32px; letter-spacing: -1px; min-height: 44px; }
+  .lp-hero-sub { font-size: 13px; max-width: 100%; }
+
+  .lp-stats { display: none; } /* hide stats on tablet — space is tight */
+
+  .lp-right { padding: 32px 24px; }
+  .lp-card { padding: 32px 28px; max-width: 380px; }
 }
- 
-@media (max-width: 360px) {
-  .lp-card { padding: 24px 16px; }
-  .lp-card-head h2 { font-size: 19px; }
-  .lp-tabs { font-size: 12px; }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET PORTRAIT + MOBILE (≤ 768px)
+   Hide left panel completely — right card takes full screen
+══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .lp-page {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 100dvh;
+  }
+
+  /* Hide decorative left panel on mobile */
+  .lp-left { display: none; }
+
+  .lp-right {
+    flex: 1;
+    width: 100%;
+    padding: 24px 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .lp-card {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    border-radius: 24px;
+  }
+
+  .lp-card-head h2 { font-size: 20px; }
+  .lp-tabs { gap: 3px; }
+  .lp-tab  { font-size: 12px; padding: 8px; }
+
+  .lp-input-wrap input { padding: 12px 42px; font-size: 14px; }
+  .lp-submit { font-size: 14px; padding: 13px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — SMALL PHONES (≤ 400px)
+══════════════════════════════════════════════════════════ */
+@media (max-width: 400px) {
+  .lp-right  { padding: 20px 12px; padding-top: 32px; }
+  .lp-card   { padding: 24px 18px; border-radius: 20px; }
+  .lp-card-head h2 { font-size: 18px; }
+  .lp-card-avatar  { width: 48px; height: 48px; font-size: 22px; }
+
+  .lp-check-row { flex-wrap: wrap; gap: 8px; }
+  .lp-forgot    { margin-left: auto; }
 }
